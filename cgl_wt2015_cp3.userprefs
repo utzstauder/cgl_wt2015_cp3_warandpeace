@@ -1,12 +1,33 @@
 ﻿<Properties StartupItem="Assembly-CSharp.csproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/DroneProjectile.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/DronesTouchPlayer.cs">
     <Files>
-      <File FileName="Assets/Scripts/BirdScript_edit.cs" Line="176" Column="29" />
+      <File FileName="Assets/Scripts/BirdScript_edit.cs" Line="180" Column="16" />
       <File FileName="Assets/Scripts/uncategorized/HFT_Test_PlayerScript.cs" Line="1" Column="1" />
-      <File FileName="Assets/Scripts/DroneProjectile.cs" Line="32" Column="23" />
+      <File FileName="Assets/Scripts/DroneProjectile.cs" Line="32" Column="24" />
       <File FileName="Assets/Scripts/Drone.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/DronesTouchPlayer.cs" Line="143" Column="61" />
+      <File FileName="Assets/Scripts/GameManager.cs" Line="40" Column="40" />
     </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State name="__root__">
+          <Node name="cgl_wt2015_cp3" expanded="True">
+            <Node name="Assembly-CSharp" expanded="True">
+              <Node name="Scripts" expanded="True">
+                <Node name="uncategorized" expanded="True" />
+                <Node name="DronesTouchPlayer.cs" selected="True" />
+              </Node>
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+      <Pad Id="MonoDevelop.NUnit.TestPad">
+        <State name="__root__">
+          <Node name="cgl_wt2015_cp3" expanded="True" selected="True" />
+        </State>
+      </Pad>
+    </Pads>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore />

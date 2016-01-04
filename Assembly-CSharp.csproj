@@ -66,6 +66,10 @@
      <Compile Include="Assets\Scripts\BirdScript_edit.cs" />
      <Compile Include="Assets\Scripts\Drone.cs" />
      <Compile Include="Assets\Scripts\DroneProjectile.cs" />
+     <Compile Include="Assets\Scripts\DronesTouchPlayer.cs" />
+     <Compile Include="Assets\Scripts\GameManager.cs" />
+     <Compile Include="Assets\Scripts\HumanParticle.cs" />
+     <Compile Include="Assets\Scripts\HumanParticleHandler.cs" />
      <Compile Include="Assets\Scripts\uncategorized\HFT_Test_PlayerScript.cs" />
      <None Include="Assets\Standard Assets\ParticleSystems\Shaders\PriorityParticleAlpha.shader" />
      <None Include="Assets\readme.txt" />
