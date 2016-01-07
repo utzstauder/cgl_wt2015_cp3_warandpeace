@@ -137,6 +137,11 @@ requirejs([
       orientation: "portrait",
       orientationOptional: true,
     },
+	// custom controller type by me
+	"draw":{
+	  orientation: "portrait",
+	  orientationOptional: true,
+	},
   };
 
   function to255(v) {
@@ -233,6 +238,9 @@ requirejs([
   client.addEventListener('play', handlePlay);
   client.addEventListener('loadSounds', handleLoadSounds);
   client.addEventListener('playSound', handlePlaySound);
+  
+  // custom eventlisteners
+  client.addEventListener('pullDrawing', handlePullDrawing);
 
   // This way of making buttons probably looks complicated but
   // it lets us easily make more buttons.
@@ -521,6 +529,136 @@ requirejs([
   }
 
   gn.init().then(setupDeviceOrientation);
+
+	// +++++++++++++++++++++++++++++++++++
+	
+	// Custom controller stuff starts here
+	// Collaborative project 3 - Drawnes
+	
+
+	// Get a referene to our touch sensitive area
+	var canvas = document.getElementById("drawCanvas");
+	var ctx = canvas.getContext("2d");
+	var lastPt = null;
+	
+	// Add event listeners
+	canvas.addEventListener("touchmove", draw, false);
+	canvas.addEventListener("touchend", drawEnd, false);
+	
+	// Resize to fit window size
+	canvas.width = window.innerWidth;
+	canvas.height = window.innerHeight;
+
+	// Check for device motion
+	if (window.DeviceMotionEvent){
+		// Add the event listener
+		window.addEventListener('devicemotion', deviceMotionHandler);
+	}
+	var accelerationThreshold = 40;
+
+	function draw(event){
+		event.preventDefault();
+		
+		// Draw a small rectangle in the canvas at the touch position
+		// ctx.fillRect(event.touches[0].pageX, event.touches[0].pageY, 5, 5);
+		
+		// Draw a continuous path
+		if (lastPt != null){			
+			ctx.beginPath();
+			ctx.lineWidth="10";
+			ctx.strokeStyle="black";
+			ctx.moveTo(lastPt.x, lastPt.y);
+			ctx.lineTo(event.touches[0].pageX, event.touches[0].pageY);
+			ctx.stroke();
+		}
+		
+		
+		// Store latest point
+		lastPt = {x:event.touches[0].pageX, y:event.touches[0].pageY};
+	}
+	
+	function drawEnd(event){
+		event.preventDefault();
+		
+		// tmp
+		//sendDrawArray();
+		
+		// Terminate touch path
+		lastPt = null;
+	}
+	
+	function clearCanvas(){
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+	}
+	
+	function deviceMotionHandler(event){
+			var acceleration = event.acceleration;
+			
+			if (Math.abs(acceleration.x) > accelerationThreshold ||
+				Math.abs(acceleration.y) > accelerationThreshold ||
+				Math.abs(acceleration.z) > accelerationThreshold){
+				
+				// temporarily put this here
+				//sendDrawArray();
+				
+				clearCanvas();
+				
+				/*if (confirm("Clear canvas?")){
+					// clear canvas
+					clearCanvas();
+				} else{
+					// do nothing
+				}*/
+			}
+	}
+	
+	function sendDrawArray(){
+		var width = ctx.canvas.width;
+		var height = ctx.canvas.height;
+		
+		// Create ImageData object from canvas
+		//var imageData = ctx.createImageData(width, height);
+		
+		// Get the image data from the drawCanvas
+		var imageData = ctx.getImageData(0, 0, width, height);
+		
+		/*
+		// Convert to "normal" int array
+		var drawArray = Array.prototype.slice.call(imageData.data);
+		*/
+		
+		// Transfer alpha values to new "normal" array
+		var drawArray = [];
+		for (var i = 3; i < (width*height*4); i += 4){
+			drawArray.push(imageData.data[i]);
+		}
+		
+		//alert(drawArray[0]);
+		
+		// Send the data to the game
+		client.sendCmd('draw', {width: width, height: height, drawArray: drawArray});
+		
+		// DEBUG
+		/*clearCanvas();
+		
+		var i = 0;
+		for (var y = 0; y < height; y++){
+			for (var x = 0; x < width; x++){
+				if (drawArray[i] > 0){
+					ctx.fillStyle("green");
+					ctx.fillRect(x, y, 10, 10);
+				}
+				i++;
+			}
+		}*/
+		
+		clearCanvas();
+		ctx.putImageData(imageData, 0, 0);
+	}
+	
+	function handlePullDrawing(data){
+		sendDrawArray();
+	}
 
 });
 

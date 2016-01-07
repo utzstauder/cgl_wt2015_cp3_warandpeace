@@ -77,6 +77,7 @@ public class HFTGamepad : MonoBehaviour {
     c_1lrpad,
     c_touch,
     c_orient,
+	c_draw,
   }
 
   [System.Serializable]
@@ -146,6 +147,14 @@ public class HFTGamepad : MonoBehaviour {
   [System.NonSerialized]
   public Button[] buttons;
 
+	// Custom array for draw data
+	[System.NonSerialized]
+	public int drawArrayWidth;
+	[System.NonSerialized]
+	public int drawArrayHeight;
+	[System.NonSerialized]
+	public int[] drawArray;
+
   // Manages the connection between this object and the phone.
   private NetPlayer m_netPlayer;
   private Color m_color = new Color(0.0f, 1.0f, 0.0f);
@@ -203,6 +212,14 @@ public class HFTGamepad : MonoBehaviour {
     public float g = 0.0f;
   }
 
+	// custom message type for the draw array
+	// TODO:
+	private class MessageDrawArray : MessageCmdData {
+		public int width = 0;
+		public int height = 0;
+		public int[] drawArray;
+	}
+
   void InitializeNetPlayer(SpawnInfo spawnInfo) {
     m_netPlayer = spawnInfo.netPlayer;
     m_netPlayer.OnDisconnect += Remove;
@@ -214,6 +231,8 @@ public class HFTGamepad : MonoBehaviour {
     m_netPlayer.RegisterCmdHandler<MessageAccel>("accel", HandleAccel);
     m_netPlayer.RegisterCmdHandler<MessageRot>("rot", HandleRot);
     m_netPlayer.RegisterCmdHandler<MessageTouch>("touch", HandleTouch);
+
+		m_netPlayer.RegisterCmdHandler<MessageDrawArray>("draw", HandleDraw);
 
     m_netPlayer.OnNameChange += ChangeName;
 
@@ -348,6 +367,16 @@ public class HFTGamepad : MonoBehaviour {
           handler(this, e);
       }
   }
+
+	// custom handler
+	void HandleDraw(MessageDrawArray data){
+		Debug.Log("Received drawArray of dimensions " + data.width + "x" + data.height);
+
+		drawArrayWidth = data.width;
+		drawArrayHeight = data.height;
+		drawArray = new int[data.width * data.height];
+		drawArray = data.drawArray;
+	}
 
 }
 
