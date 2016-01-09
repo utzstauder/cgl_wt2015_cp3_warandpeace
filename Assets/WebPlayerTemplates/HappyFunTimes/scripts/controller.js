@@ -240,6 +240,9 @@ requirejs([
   client.addEventListener('playSound', handlePlaySound);
   
   // custom eventlisteners
+  client.addEventListener('drawOptions', handleDrawOptions);
+  client.addEventListener('backgroundOptions', handleBackgroundOptions);
+  client.addEventListener('receiveLetter', handleReceiveLetter);
   client.addEventListener('pullDrawing', handlePullDrawing);
 
   // This way of making buttons probably looks complicated but
@@ -535,27 +538,75 @@ requirejs([
 	// Custom controller stuff starts here
 	// Collaborative project 3 - Drawnes
 	
-
-	// Get a referene to our touch sensitive area
+	// +++++++++++++++++++++++++++++++++++
+	// initialization
+	
+	// Variables and references and stuff
 	var canvas = document.getElementById("drawCanvas");
+	var bgCanvas = document.getElementById("backgroundCanvas");
 	var ctx = canvas.getContext("2d");
+	var bgCtx = bgCanvas.getContext("2d");
 	var lastPt = null;
+	
+	// draw variables & client stuff
+	var accelerationThreshold = 40;
+	ctx.lineWidth="15";
+	ctx.strokeStyle="black";
+	var drawArrayDivision = 1;
+	var defaultAccuracy = 0.5;
+	
+	// letter variables
+	var letterScale = 4;
+	bgCtx.fillStyle ="black";
+	
+	var currentLetter = null;
+	var currentLetterWidth = null;
+	var currentLetterHeight = null;
 	
 	// Add event listeners
 	canvas.addEventListener("touchmove", draw, false);
 	canvas.addEventListener("touchend", drawEnd, false);
 	
-	// Resize to fit window size
+	// Resize canvases to fit window size
 	canvas.width = window.innerWidth;
 	canvas.height = window.innerHeight;
+	bgCanvas.width = window.innerWidth;
+	bgCanvas.height = window.innerHeight;
 
 	// Check for device motion
 	if (window.DeviceMotionEvent){
 		// Add the event listener
 		window.addEventListener('devicemotion', deviceMotionHandler);
 	}
-	var accelerationThreshold = 40;
+	
+	// Check for vibration support
+	if ("vibrate" in navigator){
+		// enable vibration
+		navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate;
+	}
 
+	// initialization end
+	// +++++++++++++++++++++++++++++++++++
+	
+	// Overrides draw options
+	function handleDrawOptions(data){
+		var drawOptions = data.drawOptions;
+		
+		accelerationThreshold = drawOptions.accelerationThreshold;
+		ctx.lineWidth = drawOptions.lineWidth;
+		ctx.lineCap = drawOptions.lineCap;
+		ctx.strokeStyle = drawOptions.strokeStyle;
+		drawArrayDivision = drawOptions.drawArrayDivision;
+		defaultAccuracy = drawOptions.defaultAccuracy;
+	}
+	
+	function handleBackgroundOptions(data){
+		var bgOptions = data.backgroundOptions;
+		
+		letterScale = bgOptions.letterScale;
+		bgCtx.fillStyle = bgOptions.fillStyle;
+	}
+	
 	function draw(event){
 		event.preventDefault();
 		
@@ -565,10 +616,9 @@ requirejs([
 		// Draw a continuous path
 		if (lastPt != null){			
 			ctx.beginPath();
-			ctx.lineWidth="10";
-			ctx.strokeStyle="black";
 			ctx.moveTo(lastPt.x, lastPt.y);
-			ctx.lineTo(event.touches[0].pageX, event.touches[0].pageY);
+			//ctx.lineTo(event.touches[0].pageX, event.touches[0].pageY);
+			ctx.quadraticCurveTo(lastPt.x, lastPt.y, event.touches[0].pageX, event.touches[0].pageY);
 			ctx.stroke();
 		}
 		
@@ -587,8 +637,12 @@ requirejs([
 		lastPt = null;
 	}
 	
-	function clearCanvas(){
-		ctx.clearRect(0, 0, canvas.width, canvas.height);
+	function clearCanvas(context){
+		context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+		if (navigator.vibrate) {
+			// vibration API supported
+			navigator.vibrate(1000);
+		}
 	}
 	
 	function deviceMotionHandler(event){
@@ -601,7 +655,7 @@ requirejs([
 				// temporarily put this here
 				//sendDrawArray();
 				
-				clearCanvas();
+				clearCanvas(ctx);
 				
 				/*if (confirm("Clear canvas?")){
 					// clear canvas
@@ -610,6 +664,70 @@ requirejs([
 					// do nothing
 				}*/
 			}
+	}
+	
+	function flipArrayHorizontally(width, height, targetArray){
+		var newArray = [];
+		
+		for (var y = height-1; y >= 0; y--){
+			for (var x = 0; x < width; x++){
+				newArray.push(targetArray[y * width + x]);
+			}
+		}
+		
+		return newArray;
+	}
+	
+	function scaleUpArray(width, height, targetArray, scaleX, scaleY){
+		var newArray = [];
+		
+		for (var y = 0; y < height; y++){
+			for (var yStretch = 0; yStretch < scaleY; yStretch++){
+				for (var x = 0; x < width; x++){
+					for (var xStretch = 0; xStretch < scaleX; xStretch++){
+						newArray.push(targetArray[y * width + x]);
+					}
+				}
+			}
+		}
+		
+		return newArray;
+	}
+	
+	function scaleDownArray(width, height, targetArray, scaleFactor){
+		var newArray = [];
+		
+		for (var y = 0; y < height; y += scaleFactor){
+			for (var x = 0; x < width; x += scaleFactor){
+				newArray.push(targetArray[y * width + x]);
+			}
+		}
+		
+		return newArray;	
+	}
+	
+	function compareArrays(templateArray, drawArray){
+		// scale drawArray to template size
+		//var scaleFactor = ctx.canvas.width / currentLetterWidth;
+		//var scaledTemplateArray = scaleUpArray(currentLetterWidth, currentLetterHeight, templateArray, scaleFactor, scaleFactor);
+
+		//alert("scaleFactor: " + scaleFactor + ", " + scaledTemplateArray.length + " & " + drawArray.length);
+
+		var templatePixels = 0;
+		var matchingPixels = 0;
+		var accuracy = 0.0;
+		
+		for (var i = 0; i < drawArray.length; i++){
+			if (templateArray[i] > 1){
+				templatePixels++;
+				if (drawArray[i] > 1) matchingPixels++;
+			}
+			
+		}
+		
+		accuracy = matchingPixels / templatePixels;
+		
+		return accuracy;
 	}
 	
 	function sendDrawArray(){
@@ -632,32 +750,63 @@ requirejs([
 		for (var i = 3; i < (width*height*4); i += 4){
 			drawArray.push(imageData.data[i]);
 		}
+
+		var drawAccuracy;
 		
-		//alert(drawArray[0]);
+		if (currentLetter != null){
+			drawAccuracy = compareArrays(currentLetter, drawArray);
+			alert(drawAccuracy);
+		} else drawAccuracy = defaultAccuracy;
+
+		var sendArray = [];
 		
-		// Send the data to the game
-		client.sendCmd('draw', {width: width, height: height, drawArray: drawArray});
+		// Shrink down the array acording to drawArrayDivision parameter
+		sendArray = scaleDownArray(width, height, drawArray, drawArrayDivision);
 		
-		// DEBUG
-		/*clearCanvas();
+		// calculate new array dimensions
+		width = width/drawArrayDivision;
+		height = height/drawArrayDivision;
 		
-		var i = 0;
-		for (var y = 0; y < height; y++){
-			for (var x = 0; x < width; x++){
-				if (drawArray[i] > 0){
-					ctx.fillStyle("green");
-					ctx.fillRect(x, y, 10, 10);
-				}
-				i++;
-			}
-		}*/
-		
-		clearCanvas();
-		ctx.putImageData(imageData, 0, 0);
+		// Send the data to the game server
+		client.sendCmd('draw', {width: width, height: height, drawArray: sendArray, accuracy: drawAccuracy});
 	}
 	
 	function handlePullDrawing(data){
 		sendDrawArray();
+	}
+	
+	function handleReceiveLetter(data){
+		//alert(data.width + " x " + data.height + " = " + data.drawArray.length);
+		
+		//clear canvas first
+		clearCanvas(bgCtx);
+		clearCanvas(ctx);
+		
+		var flippedArray = flipArrayHorizontally(data.width, data.height, data.drawArray);
+		//alert(flippedArray.length);
+		var scaledArray = scaleUpArray(data.width, data.height, flippedArray, letterScale, letterScale);
+		//alert(scaledArray.length);
+		var newWidth = data.width * letterScale;
+		var newHeight = data.height * letterScale;
+		
+		// draw the received letter on the background canvas
+		for (var y = 0; y < bgCanvas.height; y++){
+			for (var x = 0; x < bgCanvas.width; x++){
+				// check for end of boundaries
+				// TODO: scale received array
+				if ((y * newWidth + x) < scaledArray.length){
+					if (scaledArray[y * newWidth + x] > 0){
+						bgCtx.fillRect(x, y, 1, 1);
+					}
+				}
+			}
+		}
+		
+		// set variables
+		currentLetterWidth = newWidth;
+		currentLetterHeight = newHeight;
+		currentLetter = scaledArray;
+		
 	}
 
 });

@@ -63,7 +63,12 @@
      <Compile Include="Assets\HappyFunTimes\Scripts\HFTInput.cs" />
      <Compile Include="Assets\HappyFunTimes\Scripts\HFTSoundPlayer.cs" />
      <Compile Include="Assets\HappyFunTimes\Scripts\HFTSounds.cs" />
-     <Compile Include="Assets\Scripts\DrawInputPlayer.cs" />
+     <Compile Include="Assets\Scripts\GameManager\AlphabetManager.cs" />
+     <Compile Include="Assets\Scripts\GameManager\GameManager.cs" />
+     <Compile Include="Assets\Scripts\Letter\Letter.cs" />
+     <Compile Include="Assets\Scripts\Letter\LetterPixel\LetterPixel.cs" />
+     <Compile Include="Assets\Scripts\Player\DrawInputPlayer.cs" />
+     <Compile Include="Assets\Scripts\_general\Wiggle.cs" />
      <None Include="Assets\readme.txt" />
      <None Include="Assets\WebPlayerTemplates\HappyFunTimes\sounds\sounds.jsfx.txt" />
      <None Include="Assets\HappyFunTimes\Shaders\HSVRangeShader.shader" />

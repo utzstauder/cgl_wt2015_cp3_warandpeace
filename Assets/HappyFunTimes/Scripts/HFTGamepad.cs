@@ -109,6 +109,65 @@ public class HFTGamepad : MonoBehaviour {
 
   public ControllerOptions controllerOptions;
 
+	// Custom draw options class
+	[System.Serializable]
+	public class DrawOptions{
+
+		public int lineWidth = 15;
+		public string lineCap = "round";
+		public string strokeStyle = "black";
+		public float accelerationThreshold = 50.0f;
+		public int drawArrayDivision = 8;
+		[Range(0.0f, 1.0f)]
+		public float defaultAccuracy = .5f;
+
+		public DrawOptions(){
+		}
+
+		public DrawOptions(DrawOptions src){
+			lineWidth = src.lineWidth;
+			lineCap = src.lineCap;
+			strokeStyle = src.strokeStyle;
+			accelerationThreshold = src.accelerationThreshold;
+			drawArrayDivision = src.drawArrayDivision;
+			defaultAccuracy = src.defaultAccuracy;
+		}
+
+		public bool SameValues(DrawOptions other) {
+			return lineWidth == other.lineWidth &&
+				lineCap == other.lineCap &&
+				strokeStyle == other.strokeStyle &&
+				accelerationThreshold == other.accelerationThreshold &&
+				drawArrayDivision == other.drawArrayDivision &&
+				defaultAccuracy == other.defaultAccuracy;
+		}
+	}
+
+	public DrawOptions drawOptions;
+
+	// Custom draw options class
+	[System.Serializable]
+	public class BackgroundOptions{
+
+		public int letterScale = 4;
+		public string fillStyle = "black";
+
+		public BackgroundOptions(){
+		}
+
+		public BackgroundOptions(BackgroundOptions src){
+			letterScale = src.letterScale;
+			fillStyle = src.fillStyle;
+		}
+
+		public bool SameValues(BackgroundOptions other) {
+			return letterScale == other.letterScale &&
+				fillStyle == other.fillStyle;
+		}
+	}
+
+	public BackgroundOptions backgroundOptions;
+
   HFTGamepad() {
     axes = new float[33];
     buttons = new Button[28];
@@ -154,6 +213,8 @@ public class HFTGamepad : MonoBehaviour {
 	public int drawArrayHeight;
 	[System.NonSerialized]
 	public int[] drawArray;
+	[System.NonSerialized]
+	public float drawAccuracy;
 
   // Manages the connection between this object and the phone.
   private NetPlayer m_netPlayer;
@@ -161,6 +222,8 @@ public class HFTGamepad : MonoBehaviour {
   private static int s_colorCount = 0;
 
   private ControllerOptions m_oldControllerOptions = new ControllerOptions();
+	private DrawOptions m_oldDrawOptions = new DrawOptions();
+	private BackgroundOptions m_oldBackgroundOptions = new BackgroundOptions();
 
   private class MessageOptions : MessageCmdData {
     public MessageOptions(ControllerOptions _controllerOptions) {
@@ -214,10 +277,44 @@ public class HFTGamepad : MonoBehaviour {
 
 	// custom message type for the draw array
 	// TODO:
-	private class MessageDrawArray : MessageCmdData {
+	public class MessageDrawArray : MessageCmdData {
 		public int width = 0;
 		public int height = 0;
 		public int[] drawArray;
+		public float accuracy = 1.0f;
+
+		public MessageDrawArray(){
+			
+		}
+
+		public MessageDrawArray(int _width, int _height, int[] _drawArray){
+			width = _width;
+			height = _height;
+			drawArray = _drawArray;
+		}
+
+		public MessageDrawArray(int _width, int _height, int[] _drawArray, float _accuracy){
+			width = _width;
+			height = _height;
+			drawArray = _drawArray;
+			accuracy = _accuracy;
+		}
+	}
+		
+	public class MessageDrawOptions : MessageCmdData {
+		public MessageDrawOptions(DrawOptions _drawOptions){
+			drawOptions = _drawOptions;
+		}
+
+		public DrawOptions drawOptions;
+	}
+
+	public class MessageBackgroundOptions : MessageCmdData {
+		public MessageBackgroundOptions(BackgroundOptions _backgroundOptions){
+			backgroundOptions = _backgroundOptions;
+		}
+
+		public BackgroundOptions backgroundOptions;
 	}
 
   void InitializeNetPlayer(SpawnInfo spawnInfo) {
@@ -232,7 +329,7 @@ public class HFTGamepad : MonoBehaviour {
     m_netPlayer.RegisterCmdHandler<MessageRot>("rot", HandleRot);
     m_netPlayer.RegisterCmdHandler<MessageTouch>("touch", HandleTouch);
 
-		m_netPlayer.RegisterCmdHandler<MessageDrawArray>("draw", HandleDraw);
+	m_netPlayer.RegisterCmdHandler<MessageDrawArray>("draw", HandleDraw);
 
     m_netPlayer.OnNameChange += ChangeName;
 
@@ -240,6 +337,8 @@ public class HFTGamepad : MonoBehaviour {
     // then tell it can play.
     m_netPlayer.SendCmd("play");
     SendControllerOptions();
+		SendDrawOptions();
+		SendBackgroundOptions();
     SendColor();
   }
 
@@ -294,6 +393,18 @@ public class HFTGamepad : MonoBehaviour {
       m_oldControllerOptions = new ControllerOptions(controllerOptions);
       SendControllerOptions();
     }
+
+		if (!m_oldDrawOptions.SameValues(drawOptions))
+		{
+			m_oldDrawOptions = new DrawOptions(drawOptions);
+			SendDrawOptions();
+		}
+
+		if (!m_oldBackgroundOptions.SameValues(backgroundOptions))
+		{
+			m_oldBackgroundOptions = new BackgroundOptions(backgroundOptions);
+			SendBackgroundOptions();
+		}
   }
 
   void SendControllerOptions()
@@ -303,6 +414,18 @@ public class HFTGamepad : MonoBehaviour {
       m_netPlayer.SendCmd("options", new MessageOptions(controllerOptions));
     }
   }
+
+	void SendDrawOptions(){
+		if (m_netPlayer != null && controllerOptions.controllerType == ControllerType.c_draw){
+			m_netPlayer.SendCmd("drawOptions", new MessageDrawOptions(drawOptions));
+		}
+	}
+
+	void SendBackgroundOptions(){
+		if (m_netPlayer != null && controllerOptions.controllerType == ControllerType.c_draw){
+			m_netPlayer.SendCmd("backgroundOptions", new MessageBackgroundOptions(backgroundOptions));
+		}
+	}
 
   void UpdateButton(int ndx, bool pressed) {
     Button button = buttons[ndx];
@@ -368,6 +491,15 @@ public class HFTGamepad : MonoBehaviour {
       }
   }
 
+	// Sends a letter to the phone client to be drawn on the background canvas
+	public void SendLetter(int letter){
+		int width = AlphabetManager.width;
+		int height = AlphabetManager.height;
+		int[] drawArray = AlphabetManager.LetterToArray(letter);
+
+		m_netPlayer.SendCmd("receiveLetter", new MessageDrawArray(width, height, drawArray));
+	}
+
 	// custom handler
 	void HandleDraw(MessageDrawArray data){
 		Debug.Log("Received drawArray of dimensions " + data.width + "x" + data.height);
@@ -376,6 +508,7 @@ public class HFTGamepad : MonoBehaviour {
 		drawArrayHeight = data.height;
 		drawArray = new int[data.width * data.height];
 		drawArray = data.drawArray;
+		drawAccuracy = data.accuracy;
 	}
 
 }

@@ -1,35 +1,15 @@
 ﻿<Properties StartupItem="Assembly-CSharp.csproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/HappyFunTimes/Scripts/HFTGamepad.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/Letter/Letter.cs">
     <Files>
-      <File FileName="Assets/Scripts/DrawInputPlayer.cs" Line="30" Column="43" />
       <File FileName="Assets/HappyFunTimes/Samples/Scripts/TouchPlayer.cs" Line="72" Column="24" />
-      <File FileName="Assets/HappyFunTimes/Scripts/HFTGamepad.cs" Line="139" Column="25" />
+      <File FileName="Assets/HappyFunTimes/Scripts/HFTGamepad.cs" Line="500" Column="88" />
+      <File FileName="Assets/Scripts/Player/DrawInputPlayer.cs" Line="100" Column="5" />
+      <File FileName="Assets/Scripts/GameManager/AlphabetManager.cs" Line="96" Column="21" />
+      <File FileName="Assets/Scripts/Letter/LetterPixel/LetterPixel.cs" Line="5" Column="1" />
+      <File FileName="Assets/Scripts/_general/Wiggle.cs" Line="17" Column="12" />
+      <File FileName="Assets/Scripts/Letter/Letter.cs" Line="11" Column="31" />
     </Files>
-    <Pads>
-      <Pad Id="ProjectPad">
-        <State name="__root__">
-          <Node name="cgl_wt2015_cp3" expanded="True">
-            <Node name="Assembly-CSharp" expanded="True">
-              <Node name="HappyFunTimes" expanded="True">
-                <Node name="Samples" expanded="True">
-                  <Node name="Scripts" expanded="True" />
-                </Node>
-                <Node name="Scripts" expanded="True">
-                  <Node name="HFTGamepad.cs" selected="True" />
-                </Node>
-              </Node>
-              <Node name="Scripts" expanded="True" />
-            </Node>
-          </Node>
-        </State>
-      </Pad>
-      <Pad Id="MonoDevelop.NUnit.TestPad">
-        <State name="__root__">
-          <Node name="cgl_wt2015_cp3" expanded="True" selected="True" />
-        </State>
-      </Pad>
-    </Pads>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore />
