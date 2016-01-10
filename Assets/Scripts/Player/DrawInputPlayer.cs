@@ -6,7 +6,19 @@ using System.Collections.Generic;
 using HappyFunTimes;
 using CSSParse;
 
+/*
+ * TODO: create subclass or struct for DRAWING containing all the information needed
+ */
+
 public class DrawInputPlayer : MonoBehaviour {
+
+	public bool m_debug = false;
+
+	// This players index; default is -1
+	private int m_playerIndex = -1;
+
+	private List<int[]> listOfDrawings;
+	private List<float> listOfAccuracies;
 
 	private HFTGamepad m_gamepad;
 	private HFTInput m_hftInput;
@@ -19,12 +31,28 @@ public class DrawInputPlayer : MonoBehaviour {
 	public float letterPixelScale = 7.0f;
 	public float letterScale = .5f;
 
-	// Use this for initialization
+	void Awake(){
+		// Add this player to the list of players
+		PlayerManager.s_playerManager.AddPlayer(this);
+
+		listOfDrawings = new List<int[]>();
+		listOfAccuracies = new List<float>();
+	}
+
 	void Start () {
 		m_gamepad  = GetComponent<HFTGamepad>();
 		m_color = m_gamepad.Color;
+
+		m_gamepad.OnReceiveDrawing += OnDrawingReceived;
 	}
-	
+
+	void OnDestroy(){
+		// Remove this player of the list of players
+		PlayerManager.s_playerManager.RemovePlayer(this);
+
+		m_gamepad.OnReceiveDrawing -= OnDrawingReceived;
+	}
+
 	// Update is called once per frame
 	void Update () {
 		if (Input.GetKeyDown(KeyCode.Space)){
@@ -32,6 +60,67 @@ public class DrawInputPlayer : MonoBehaviour {
 			//SpawnPixelsFromArray(2);
 		}
 	}
+
+	public int GetNumberOfDrawings(){
+		return listOfDrawings.Count;
+	}
+
+	public int[] GetDrawing(){
+		return m_gamepad.drawArray;
+	}
+
+	public Vector2 GetDrawingDimension(){
+		return new Vector2(m_gamepad.drawArrayWidth, m_gamepad.drawArrayHeight);
+	}
+
+	public int GetDrawingDivision(){
+		return m_gamepad.drawOptions.drawArrayDivision;
+	}
+
+	public Color GetPlayerColor(){
+		return m_color;
+	}
+
+	private void OnDrawingReceived(){
+		PushDrawing(m_gamepad.drawArray);
+		PushAccuracy(m_gamepad.drawAccuracy);
+
+		GameManager.s_gameManager.OnPlayerReceivedDrawing(this);
+	}
+
+	private void PushAccuracy(float _accuracy){
+		listOfAccuracies.Add(_accuracy);
+	}
+
+	public float PopAccuracy(){
+		float returnAccuracy = -1.0f;
+
+		if (listOfAccuracies.Count > 0){
+			returnAccuracy = listOfAccuracies[0];
+			listOfAccuracies.RemoveAt(0);
+		}
+
+		return returnAccuracy;
+	}
+
+	private void PushDrawing(int[] _drawing){
+		listOfDrawings.Add(_drawing);
+	}
+
+	public int[] PopDrawing(){
+		int[] returnDrawing = null;
+
+		if (listOfDrawings.Count > 0){
+			returnDrawing = listOfDrawings[0];
+			listOfDrawings.RemoveAt(0);
+		}
+
+		return returnDrawing;
+	}
+
+	// +++++++++++++++++++++++++++++++++++
+	// TODO: everything below should be implemented somewhere else
+
 
 	void PullDrawing(){
 		m_gamepad.NetPlayer.SendCmd("pullDrawing");
@@ -136,28 +225,30 @@ public class DrawInputPlayer : MonoBehaviour {
 		File.WriteAllBytes(Application.dataPath + "/../SavedScreen.png", bytes);
 	}
 
-	// TODO: bad implementation / doesn't belong here
-	void DrawLetterOnBackground(int letter){
+	// TODO: bad implementation / doesn't belong here / or does it?
+	public void DrawLetterOnBackground(int letter){
 		m_gamepad.SendLetter(letter);
 	}
 
 	void OnGUI(){
-		if (GUI.Button(new Rect(10, 10, 120, 20), "Send letter")){
-			int randomLetter = UnityEngine.Random.Range(0, AlphabetManager.g_letters.Length-1);
-			DrawLetterOnBackground(randomLetter);
-		}
-		if (GUI.Button(new Rect(10, 30, 120, 20), "Pull drawing")){
-			PullDrawing();
-		}
-		if (m_gamepad.drawArray != null){
-			if (GUI.Button(new Rect(10, 50, 120, 20), "Spawn pixels")){
-				SpawnPixelsFromArray();
+		if (m_debug){
+			if (GUI.Button(new Rect(10, 10, 120, 20), "Send letter")){
+				int randomLetter = UnityEngine.Random.Range(0, AlphabetManager.g_letters.Length-1);
+				DrawLetterOnBackground(randomLetter);
 			}
-			if (GUI.Button(new Rect(10, 70, 120, 20), "Delete letters")){
-				DeleteAllLettersFromScene();
+			if (GUI.Button(new Rect(10, 30, 120, 20), "Pull drawing")){
+				PullDrawing();
 			}
-			if (GUI.Button(new Rect(10, 90, 120, 20), "Save to file")){
-				SaveDrawingToFile();
+			if (m_gamepad.drawArray != null){
+				if (GUI.Button(new Rect(10, 50, 120, 20), "Spawn pixels")){
+					SpawnPixelsFromArray();
+				}
+				if (GUI.Button(new Rect(10, 70, 120, 20), "Delete letters")){
+					DeleteAllLettersFromScene();
+				}
+				if (GUI.Button(new Rect(10, 90, 120, 20), "Save to file")){
+					SaveDrawingToFile();
+				}
 			}
 		}
 	}

@@ -4,6 +4,13 @@ using System.Collections;
 
 public class HFTGamepad : MonoBehaviour {
 
+	// 
+
+	public delegate void DrawingNotification();
+	public event DrawingNotification OnReceiveDrawing;
+
+	//
+
   public const int AXIS_DPAD0_X = 0;
   public const int AXIS_DPAD0_Y = 1;
   public const int AXIS_DPAD1_X = 0;
@@ -509,6 +516,8 @@ public class HFTGamepad : MonoBehaviour {
 		drawArray = new int[data.width * data.height];
 		drawArray = data.drawArray;
 		drawAccuracy = data.accuracy;
+
+		OnReceiveDrawing();
 	}
 
 }

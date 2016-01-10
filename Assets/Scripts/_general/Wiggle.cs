@@ -15,7 +15,7 @@ public class Wiggle : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		initialPosition = transform.position;
+		initialPosition = transform.localPosition;
 	}
 
 	// Update is called once per frame
@@ -41,6 +41,6 @@ public class Wiggle : MonoBehaviour {
 			frequencyTimer = 0;
 		}
 			
-		transform.position = Vector3.Lerp(transform.position, newPosition, Time.deltaTime * wiggleSpeed);
+		transform.localPosition = Vector3.Lerp(transform.localPosition, newPosition, Time.deltaTime * wiggleSpeed);
 	}
 }

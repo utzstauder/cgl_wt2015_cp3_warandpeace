@@ -18,6 +18,8 @@ public class Letter : MonoBehaviour {
 		}
 
 		prevWiggleInChildren = wiggleInChildren;
+
+		if (transform.childCount <= 0) Destroy(this.gameObject);
 	}
 
 	void OnWiggleInChildrenChange(bool param){

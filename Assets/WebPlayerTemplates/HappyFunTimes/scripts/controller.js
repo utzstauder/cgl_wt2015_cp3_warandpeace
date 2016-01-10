@@ -655,6 +655,11 @@ requirejs([
 				// temporarily put this here
 				//sendDrawArray();
 				
+				
+				if (currentLetter == null){
+					// for showcasing
+					sendDrawArray();
+				}
 				clearCanvas(ctx);
 				
 				/*if (confirm("Clear canvas?")){
@@ -782,10 +787,12 @@ requirejs([
 		clearCanvas(bgCtx);
 		clearCanvas(ctx);
 		
+		// array is upside down
 		var flippedArray = flipArrayHorizontally(data.width, data.height, data.drawArray);
-		//alert(flippedArray.length);
+		// array is smaller than canvas
 		var scaledArray = scaleUpArray(data.width, data.height, flippedArray, letterScale, letterScale);
-		//alert(scaledArray.length);
+	
+		// calculate scaled dimensions
 		var newWidth = data.width * letterScale;
 		var newHeight = data.height * letterScale;
 		
@@ -793,7 +800,6 @@ requirejs([
 		for (var y = 0; y < bgCanvas.height; y++){
 			for (var x = 0; x < bgCanvas.width; x++){
 				// check for end of boundaries
-				// TODO: scale received array
 				if ((y * newWidth + x) < scaledArray.length){
 					if (scaledArray[y * newWidth + x] > 0){
 						bgCtx.fillRect(x, y, 1, 1);

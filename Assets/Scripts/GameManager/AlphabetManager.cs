@@ -100,7 +100,6 @@ public class AlphabetManager : MonoBehaviour {
 	public static int[] LetterToArray(int letterIndex){
 		int[] array = new int[width * height];
 		Texture2D letter = g_letters[letterIndex];
-		int i = 0;
 
 		for (int y = 0; y < height; y++){
 			for (int x = 0; x < width; x++){
