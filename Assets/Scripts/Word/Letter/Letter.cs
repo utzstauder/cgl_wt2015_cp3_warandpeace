@@ -3,6 +3,8 @@ using System.Collections;
 
 public class Letter : MonoBehaviour {
 
+	public float deathX = -400;
+
 	public bool wiggleInChildren = false;
 	private bool prevWiggleInChildren;
 
@@ -20,6 +22,8 @@ public class Letter : MonoBehaviour {
 		prevWiggleInChildren = wiggleInChildren;
 
 		if (transform.childCount <= 0) Destroy(this.gameObject);
+
+		if (transform.position.x < deathX) Destroy(this.gameObject);
 	}
 
 	void OnWiggleInChildrenChange(bool param){

@@ -544,8 +544,10 @@ requirejs([
 	// Variables and references and stuff
 	var canvas = document.getElementById("drawCanvas");
 	var bgCanvas = document.getElementById("backgroundCanvas");
+	var debugCanvas = document.getElementById("debugCanvas");
 	var ctx = canvas.getContext("2d");
 	var bgCtx = bgCanvas.getContext("2d");
+	var debug = debugCanvas.getContext("2d");
 	var lastPt = null;
 	
 	// draw variables & client stuff
@@ -564,6 +566,8 @@ requirejs([
 	var currentLetterHeight = null;
 	
 	// Add event listeners
+	window.addEventListener("resize", handleResize);
+	
 	canvas.addEventListener("touchmove", draw, false);
 	canvas.addEventListener("touchend", drawEnd, false);
 	
@@ -572,11 +576,15 @@ requirejs([
 	canvas.height = window.innerHeight;
 	bgCanvas.width = window.innerWidth;
 	bgCanvas.height = window.innerHeight;
+	debugCanvas.width = window.innerWidth;
+	debugCanvas.height = window.innerHeight;
 
 	// Check for device motion
-	if (window.DeviceMotionEvent){
+	if (window.DeviceMotionEvent || window.DeviceMotion){
 		// Add the event listener
 		window.addEventListener('devicemotion', deviceMotionHandler);
+	} else {
+		alert("devicemotion not supported!");
 	}
 	
 	// Check for vibration support
@@ -587,6 +595,25 @@ requirejs([
 
 	// initialization end
 	// +++++++++++++++++++++++++++++++++++
+	
+	function handleResize(event){
+		var lineWidthTmp = ctx.lineWidth;
+		var lineCapTmp = ctx.lineCap;
+		var strokeStyleTmp = ctx.strokeStyle;
+		var bgFillStyleTmp = bgCtx.fillStyle;
+		
+		canvas.width = window.innerWidth;
+		canvas.height = window.innerHeight;
+		bgCanvas.width = window.innerWidth;
+		bgCanvas.height = window.innerHeight;
+		debugCanvas.width = window.innerWidth;
+		debugCanvas.height = window.innerHeight;
+		
+		ctx.lineWidth = lineWidthTmp;
+		ctx.lineCap = lineCapTmp;
+		ctx.strokeStyle = strokeStyleTmp;
+		bgCtx.fillStyle = bgFillStyleTmp;
+	}
 	
 	// Overrides draw options
 	function handleDrawOptions(data){
@@ -639,22 +666,32 @@ requirejs([
 	
 	function clearCanvas(context){
 		context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-		if (navigator.vibrate) {
+		/*if (navigator.vibrate) {
 			// vibration API supported
 			navigator.vibrate(1000);
-		}
+		}*/
 	}
 	
 	function deviceMotionHandler(event){
+			var accelerationIncludingGravity = event.accelerationIncludingGravity;
 			var acceleration = event.acceleration;
+			
+			/*clearCanvas(debug);
+			debug.fillText(event.toString, 0, 20);
+			debug.fillText(acceleration.x, 0, 40);
+			debug.fillText(acceleration.y, 0, 60);
+			debug.fillText(acceleration.z, 0, 80);*/
 			
 			if (Math.abs(acceleration.x) > accelerationThreshold ||
 				Math.abs(acceleration.y) > accelerationThreshold ||
-				Math.abs(acceleration.z) > accelerationThreshold){
+				Math.abs(acceleration.z) > accelerationThreshold ||
+				Math.abs(accelerationIncludingGravity.x) > accelerationThreshold ||
+				Math.abs(accelerationIncludingGravity.y) > accelerationThreshold ||
+				Math.abs(accelerationIncludingGravity.z) > accelerationThreshold){
 				
 				// temporarily put this here
 				//sendDrawArray();
-				
+				//alert(acceleration.x +"/"+ acceleration.y +"/"+ acceleration.z);
 				
 				if (currentLetter == null){
 					// for showcasing

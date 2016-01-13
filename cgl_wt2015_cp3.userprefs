@@ -1,14 +1,18 @@
 ﻿<Properties StartupItem="Assembly-CSharp.csproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/Letter/Letter.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/Word/Letter/Letter.cs">
     <Files>
-      <File FileName="Assets/HappyFunTimes/Samples/Scripts/TouchPlayer.cs" Line="72" Column="24" />
-      <File FileName="Assets/HappyFunTimes/Scripts/HFTGamepad.cs" Line="500" Column="88" />
-      <File FileName="Assets/Scripts/Player/DrawInputPlayer.cs" Line="100" Column="5" />
-      <File FileName="Assets/Scripts/GameManager/AlphabetManager.cs" Line="96" Column="21" />
-      <File FileName="Assets/Scripts/Letter/LetterPixel/LetterPixel.cs" Line="5" Column="1" />
-      <File FileName="Assets/Scripts/_general/Wiggle.cs" Line="17" Column="12" />
-      <File FileName="Assets/Scripts/Letter/Letter.cs" Line="11" Column="31" />
+      <File FileName="Assets/Scripts/Player/DrawInputPlayer.cs" Line="49" Column="27" />
+      <File FileName="Assets/HappyFunTimes/Scripts/HFTGamepad.cs" Line="493" Column="18" />
+      <File FileName="Assets/Scripts/GameManager/PlayerManager.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/Word/Letter/LetterPixel/LetterPixel.cs" Line="10" Column="2" />
+      <File FileName="Assets/Scripts/GameManager/WordManager.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/GameManager/GameManager.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/WordSpawner/WordSpawner.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/Word/Word.cs" Line="23" Column="3" />
+      <File FileName="Assets/Scripts/GameManager/AlphabetManager.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/_general/Wiggle.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/Word/Letter/Letter.cs" Line="26" Column="63" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

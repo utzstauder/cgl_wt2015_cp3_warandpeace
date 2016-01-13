@@ -44,6 +44,9 @@ public class DrawInputPlayer : MonoBehaviour {
 		m_color = m_gamepad.Color;
 
 		m_gamepad.OnReceiveDrawing += OnDrawingReceived;
+		m_gamepad.OnNameChange += ChangeName;
+
+		SetName(m_gamepad.Name);
 	}
 
 	void OnDestroy(){
@@ -59,6 +62,16 @@ public class DrawInputPlayer : MonoBehaviour {
 			//DrawTextureOnCube();
 			//SpawnPixelsFromArray(2);
 		}
+	}
+
+	private void SetName(string _name){
+		m_name = _name;
+		gameObject.name = "Player_" + _name;
+	}
+
+	private void ChangeName(object sender, EventArgs e)
+	{
+		SetName(m_gamepad.Name);
 	}
 
 	public int GetNumberOfDrawings(){

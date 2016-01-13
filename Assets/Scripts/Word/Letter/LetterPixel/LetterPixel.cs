@@ -30,21 +30,7 @@ public class LetterPixel : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		
+		//if (transform.position.x < deathX) Destroy(this.gameObject);
 	}
 
-	// Call this when the pixel is hit by any damage source
-	void OnHit(int _damage){
-		
-	}
-
-	// TODO: implement
-	void OnTriggerEnter2D(Collider2D _other){
-		Debug.Log("TriggerHit");
-
-		// call OnHit(...) when hit
-		if (_other.CompareTag("WordDestroyer")){
-			Destroy(this.gameObject);
-		}
-	}
 }
