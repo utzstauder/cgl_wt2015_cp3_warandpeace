@@ -9,6 +9,8 @@ public class Word : MonoBehaviour {
 
 	private Vector3 m_targetPosition = Vector3.zero;
 
+	private WordSpawner m_wordSpawner;
+
 	// Use this for initialization
 	void Start () {
 	
@@ -18,8 +20,20 @@ public class Word : MonoBehaviour {
 	void Update () {
 		//m_targetPosition = transform.position + m_speed;
 		//transform.position = Vector3.Lerp(transform.position, m_targetPosition, m_speed.magnitude * Time.deltaTime);
-		transform.position += m_speed * Time.deltaTime;
+		if (GameManager.s_gameManager.IsPlaying()){
+			transform.position += m_speed * Time.deltaTime;
+		}
 
+
+		if (transform.position.x <= m_wordSpawner.GetDeathX()) Destroy(this.gameObject);
+	}
+
+	public void CheckChildCount(){
 		if (transform.childCount <= 0) Destroy(this.gameObject);
 	}
+
+	public void SetWordSpawnerReference(WordSpawner _reference){
+		m_wordSpawner = _reference;
+	}
+		
 }

@@ -14,9 +14,6 @@ public class DrawInputPlayer : MonoBehaviour {
 
 	public bool m_debug = false;
 
-	// This players index; default is -1
-	private int m_playerIndex = -1;
-
 	private List<int[]> listOfDrawings;
 	private List<float> listOfAccuracies;
 
@@ -47,6 +44,7 @@ public class DrawInputPlayer : MonoBehaviour {
 		m_gamepad.OnNameChange += ChangeName;
 
 		SetName(m_gamepad.Name);
+		SetGameState(GameManager.s_gameManager.GetGameStateAsString(GameManager.s_gameManager.m_currentState));
 	}
 
 	void OnDestroy(){
@@ -62,6 +60,10 @@ public class DrawInputPlayer : MonoBehaviour {
 			//DrawTextureOnCube();
 			//SpawnPixelsFromArray(2);
 		}
+	}
+
+	public void SetGameState(string _gameState){
+		m_gamepad.drawOptions.gameState = _gameState;
 	}
 
 	private void SetName(string _name){
@@ -94,10 +96,25 @@ public class DrawInputPlayer : MonoBehaviour {
 		return m_color;
 	}
 
+	public string GetSessionId(){
+		return m_gamepad.NetPlayer.GetSessionId();
+	}
+
+	public Drawing GetCurrentDrawing(){
+		//Debug.Log("GetCurrentDrawing");
+		return new Drawing(	m_gamepad.drawArray,
+							m_gamepad.drawArrayWidth,
+							m_gamepad.drawArrayHeight,
+							m_gamepad.drawOptions.drawArrayDivision,
+							m_gamepad.NetPlayer.GetSessionId(),
+							m_gamepad.drawAccuracy);
+	}
+
+	// TODO: deprecated
 	private void OnDrawingReceived(){
 		PushDrawing(m_gamepad.drawArray);
 		PushAccuracy(m_gamepad.drawAccuracy);
-
+		//Debug.Log("OnDrawingReceived");
 		GameManager.s_gameManager.OnPlayerReceivedDrawing(this);
 	}
 
@@ -166,7 +183,7 @@ public class DrawInputPlayer : MonoBehaviour {
 		byte[] bytes = texture.EncodeToPNG();
 		File.WriteAllBytes(Application.dataPath + "/../SavedScreen.png", bytes);
 
-		texture.alphaIsTransparency = true;
+		//texture.alphaIsTransparency = true;
 
 		Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero, 100.0f);
 		sprite.name = "drawnSprite";

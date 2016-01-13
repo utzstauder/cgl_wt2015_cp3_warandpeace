@@ -7,9 +7,16 @@ public class WordManager : MonoBehaviour {
 	 * This class contains all the methods needed to read words from the "dictionary"
 	 */
 
+	public static WordManager s_wordManager;
+
 	// Use this for initialization
-	void Start () {
-		
+	void Awake () {
+		if (s_wordManager != null){
+			Debug.LogError("There is more than one WordManager in the scene");
+			Destroy(this);
+		} else{
+			s_wordManager = this;
+		}
 	}
 	
 	// Update is called once per frame

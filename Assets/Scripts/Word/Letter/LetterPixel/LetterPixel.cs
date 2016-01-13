@@ -8,9 +8,12 @@ using System.Collections;
 [RequireComponent(typeof(SpriteRenderer))]
 public class LetterPixel : MonoBehaviour {
 
-	private int maxHp = 5;
+	public int maxHp = 5;
+	public int m_points = 5;
 	private int initialHp;
 	private int currentHp;
+
+	private Letter parent;
 
 	// References
 	private SpriteRenderer spriteRenderer;
@@ -31,6 +34,27 @@ public class LetterPixel : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 		//if (transform.position.x < deathX) Destroy(this.gameObject);
+	}
+
+	public void SetParent(Letter _parent){
+		parent = _parent;
+		transform.parent = _parent.transform;
+	}
+
+	public void ApplyDamage(int _damage){
+		currentHp -= _damage;
+		CheckHP();
+	}
+
+	private void CheckHP(){
+		if (currentHp <= 0){
+			GameManager.s_gameManager.AddScore(m_points);
+			Destroy(this.gameObject);
+		}
+	}
+
+	void OnDestroy(){
+		if (parent) parent.CheckChildCount();
 	}
 
 }

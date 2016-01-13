@@ -551,11 +551,14 @@ requirejs([
 	var lastPt = null;
 	
 	// draw variables & client stuff
+	var gameState = "initializing";
+	var prevGameState = "";
 	var accelerationThreshold = 40;
 	ctx.lineWidth="15";
 	ctx.strokeStyle="black";
 	var drawArrayDivision = 1;
 	var defaultAccuracy = 0.5;
+	var accuracyThreshold = 0.75;
 	
 	// letter variables
 	var letterScale = 4;
@@ -613,18 +616,30 @@ requirejs([
 		ctx.lineCap = lineCapTmp;
 		ctx.strokeStyle = strokeStyleTmp;
 		bgCtx.fillStyle = bgFillStyleTmp;
+		
+		if (currentLetter !== null && gameState == "playing_word"){
+			drawLetterOnBgCanvas();
+		}
 	}
 	
 	// Overrides draw options
 	function handleDrawOptions(data){
 		var drawOptions = data.drawOptions;
 		
+		prevGameState = gameState;
+		gameState = drawOptions.gameState;
 		accelerationThreshold = drawOptions.accelerationThreshold;
 		ctx.lineWidth = drawOptions.lineWidth;
 		ctx.lineCap = drawOptions.lineCap;
 		ctx.strokeStyle = drawOptions.strokeStyle;
 		drawArrayDivision = drawOptions.drawArrayDivision;
 		defaultAccuracy = drawOptions.defaultAccuracy;
+		accuracyThreshold = drawOptions.accuracyThreshold;
+		
+		if (prevGameState === "paused" && gameState === "playing_free"){
+			clearCanvas(ctx);
+			clearCanvas(bgCtx);
+		}
 	}
 	
 	function handleBackgroundOptions(data){
@@ -657,11 +672,25 @@ requirejs([
 	function drawEnd(event){
 		event.preventDefault();
 		
+		//alert("touch release");
 		// tmp
 		//sendDrawArray();
 		
 		// Terminate touch path
 		lastPt = null;
+		
+		// If in word mode check for accuracy of drawing and send to game if complete
+		if (currentLetter !== null && gameState === "playing_word"){
+			
+			var accuracy = compareCanvas(bgCtx, ctx);
+			/*var drawArray = createDrawArray(ctx);
+			var accuracy = compareArrays(currentLetter, drawArray);*/
+			//alert(accuracy);
+			if (accuracy >= accuracyThreshold){
+				sendDrawArray(accuracy);
+				currentLetter = null;
+			}
+		}
 	}
 	
 	function clearCanvas(context){
@@ -693,9 +722,9 @@ requirejs([
 				//sendDrawArray();
 				//alert(acceleration.x +"/"+ acceleration.y +"/"+ acceleration.z);
 				
-				if (currentLetter == null){
+				if (gameState === "playing_free"){
 					// for showcasing
-					sendDrawArray();
+					sendDrawArray(defaultAccuracy);
 				}
 				clearCanvas(ctx);
 				
@@ -748,13 +777,59 @@ requirejs([
 		return newArray;	
 	}
 	
+	function compareCanvas(contextTemplate, contextDraw){
+		var arrayTemplate = createDrawArray(contextTemplate);
+		var arrayDraw = createDrawArray(contextDraw);
+		
+		//alert(arrayTemplate.length + " & " + arrayDraw.length);
+		
+		//alert("test");
+		
+		var arrayLength = arrayTemplate.length || arrayDraw.length;
+		
+		//alert (arrayLength);
+		
+		var templatePixels = 0;
+		var negativeTemplatePixels = 0;
+		var drawnPixels = 0;
+		var matchingPixels = 0;
+		var mismatchingPixels = 0;
+		
+		for (var i = 0; i < arrayLength; i++){
+			if (arrayTemplate[i] > 0){
+				templatePixels++;
+			} else {
+				negativeTemplatePixels++;
+			}
+			
+			if (arrayDraw[i] > 0){
+				drawnPixels++;
+			}
+			
+			if (arrayTemplate[i] > 0 && arrayDraw[i] > 0){
+				matchingPixels++;
+			}
+			else {
+				mismatchingPixels++;
+			}
+		}
+		
+		//alert(matchingPixels +"||"+ templatePixels +"||"+ drawnPixels +"||"+ matchingPixels +"||"+ negativeTemplatePixels);
+		
+		var accuracy = (matchingPixels / templatePixels) - (drawnPixels - matchingPixels)/negativeTemplatePixels;
+
+		//alert(accuracy);
+
+		return accuracy;
+	}
+	
 	function compareArrays(templateArray, drawArray){
 		// scale drawArray to template size
 		//var scaleFactor = ctx.canvas.width / currentLetterWidth;
 		//var scaledTemplateArray = scaleUpArray(currentLetterWidth, currentLetterHeight, templateArray, scaleFactor, scaleFactor);
 
 		//alert("scaleFactor: " + scaleFactor + ", " + scaledTemplateArray.length + " & " + drawArray.length);
-
+		
 		var templatePixels = 0;
 		var matchingPixels = 0;
 		var accuracy = 0.0;
@@ -764,41 +839,61 @@ requirejs([
 				templatePixels++;
 				if (drawArray[i] > 1) matchingPixels++;
 			}
-			
 		}
 		
 		accuracy = matchingPixels / templatePixels;
-		
+				
 		return accuracy;
 	}
 	
-	function sendDrawArray(){
-		var width = ctx.canvas.width;
-		var height = ctx.canvas.height;
+	function createDrawArray(context){
+		var width = context.canvas.width;
+		var height = context.canvas.height;
+		var imageData = context.getImageData(0, 0, width, height);
 		
-		// Create ImageData object from canvas
-		//var imageData = ctx.createImageData(width, height);
-		
-		// Get the image data from the drawCanvas
-		var imageData = ctx.getImageData(0, 0, width, height);
-		
-		/*
-		// Convert to "normal" int array
-		var drawArray = Array.prototype.slice.call(imageData.data);
-		*/
-		
-		// Transfer alpha values to new "normal" array
 		var drawArray = [];
 		for (var i = 3; i < (width*height*4); i += 4){
 			drawArray.push(imageData.data[i]);
 		}
-
-		var drawAccuracy;
+		return drawArray;
+	}
+	
+	function drawLetterOnBgCanvas(){
+		// draw the received letter on the background canvas
+		for (var y = 0; y < bgCanvas.height; y++){
+			for (var x = 0; x < bgCanvas.width; x++){
+				// check for end of boundaries
+				if ((y * currentLetterWidth + x) < currentLetter.length){
+					if (currentLetter[y * currentLetterWidth + x] > 0){
+						bgCtx.fillRect(x, y, 1, 1);
+					}
+				}
+			}
+		}
+	}
+	
+	function sendDrawArray(accuracy){
+		var width = ctx.canvas.width;
+		var height = ctx.canvas.height;
 		
+		// Get the image data from the drawCanvas
+		var imageData = ctx.getImageData(0, 0, width, height);
+		
+		// Transfer alpha values to new "normal" array
+		var drawArray = createDrawArray(ctx);
+
+		var drawAccuracy = accuracy || defaultAccuracy;
+
+		/*
 		if (currentLetter != null){
 			drawAccuracy = compareArrays(currentLetter, drawArray);
 			alert(drawAccuracy);
-		} else drawAccuracy = defaultAccuracy;
+		} else drawAccuracy = defaultAccuracy;*/
+		
+		if (currentLetter !== null){
+			clearCanvas(bgCtx);
+			clearCanvas(ctx);
+		}
 
 		var sendArray = [];
 		
@@ -833,6 +928,7 @@ requirejs([
 		var newWidth = data.width * letterScale;
 		var newHeight = data.height * letterScale;
 		
+		/*
 		// draw the received letter on the background canvas
 		for (var y = 0; y < bgCanvas.height; y++){
 			for (var x = 0; x < bgCanvas.width; x++){
@@ -844,12 +940,14 @@ requirejs([
 				}
 			}
 		}
+		*/
 		
 		// set variables
 		currentLetterWidth = newWidth;
 		currentLetterHeight = newHeight;
 		currentLetter = scaledArray;
 		
+		drawLetterOnBgCanvas();
 	}
 
 });

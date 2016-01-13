@@ -63,8 +63,10 @@
      <Compile Include="Assets\HappyFunTimes\Scripts\HFTInput.cs" />
      <Compile Include="Assets\HappyFunTimes\Scripts\HFTSoundPlayer.cs" />
      <Compile Include="Assets\HappyFunTimes\Scripts\HFTSounds.cs" />
+     <Compile Include="Assets\Scripts\CameraDolly\CameraDolly.cs" />
      <Compile Include="Assets\Scripts\Drone\Drone.cs" />
      <Compile Include="Assets\Scripts\Drone\DroneInput.cs" />
+     <Compile Include="Assets\Scripts\Drone\DroneProjectile\DroneProjectile.cs" />
      <Compile Include="Assets\Scripts\GameManager\AlphabetManager.cs" />
      <Compile Include="Assets\Scripts\GameManager\GameManager.cs" />
      <Compile Include="Assets\Scripts\GameManager\PlayerManager.cs" />
@@ -75,6 +77,7 @@
      <Compile Include="Assets\Scripts\Word\Letter\LetterPixel\LetterPixel.cs" />
      <Compile Include="Assets\Scripts\Word\Word.cs" />
      <Compile Include="Assets\Scripts\WordSpawner\WordSpawner.cs" />
+     <Compile Include="Assets\Scripts\_general\Drawing.cs" />
      <Compile Include="Assets\Scripts\_general\Wiggle.cs" />
      <None Include="Assets\readme.txt" />
      <None Include="Assets\WebPlayerTemplates\HappyFunTimes\sounds\sounds.jsfx.txt" />

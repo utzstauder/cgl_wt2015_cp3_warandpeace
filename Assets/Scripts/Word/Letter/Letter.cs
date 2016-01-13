@@ -8,6 +8,8 @@ public class Letter : MonoBehaviour {
 	public bool wiggleInChildren = false;
 	private bool prevWiggleInChildren;
 
+	private Word parent;
+
 	// Use this for initialization
 	void Awake () {
 		prevWiggleInChildren = false;
@@ -32,5 +34,18 @@ public class Letter : MonoBehaviour {
 		foreach (Wiggle wiggle in wiggleScripts){
 			wiggle.wiggle = param;
 		}
+	}
+
+	public void SetParent(Word _parent){
+		parent = _parent;
+		transform.parent = _parent.transform;
+	}
+
+	public void CheckChildCount(){
+		if (transform.childCount <= 0) Destroy(this.gameObject);
+	}
+
+	void OnDestroy(){
+		if (parent) parent.CheckChildCount();
 	}
 }

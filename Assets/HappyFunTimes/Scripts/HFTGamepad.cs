@@ -120,6 +120,7 @@ public class HFTGamepad : MonoBehaviour {
 	[System.Serializable]
 	public class DrawOptions{
 
+		public string gameState = "initializing";
 		public int lineWidth = 15;
 		public string lineCap = "round";
 		public string strokeStyle = "black";
@@ -127,26 +128,31 @@ public class HFTGamepad : MonoBehaviour {
 		public int drawArrayDivision = 8;
 		[Range(0.0f, 1.0f)]
 		public float defaultAccuracy = .5f;
+		public float accuracyThreshold = .75f;
 
 		public DrawOptions(){
 		}
 
 		public DrawOptions(DrawOptions src){
+			gameState = src.gameState;
 			lineWidth = src.lineWidth;
 			lineCap = src.lineCap;
 			strokeStyle = src.strokeStyle;
 			accelerationThreshold = src.accelerationThreshold;
 			drawArrayDivision = src.drawArrayDivision;
 			defaultAccuracy = src.defaultAccuracy;
+			accuracyThreshold = src.accuracyThreshold;
 		}
 
 		public bool SameValues(DrawOptions other) {
-			return lineWidth == other.lineWidth &&
+			return gameState == other.gameState &&
+				lineWidth == other.lineWidth &&
 				lineCap == other.lineCap &&
 				strokeStyle == other.strokeStyle &&
 				accelerationThreshold == other.accelerationThreshold &&
 				drawArrayDivision == other.drawArrayDivision &&
-				defaultAccuracy == other.defaultAccuracy;
+				defaultAccuracy == other.defaultAccuracy &&
+				accuracyThreshold == other.accuracyThreshold;
 		}
 	}
 
@@ -509,7 +515,7 @@ public class HFTGamepad : MonoBehaviour {
 
 	// custom handler
 	void HandleDraw(MessageDrawArray data){
-		Debug.Log("Received drawArray of dimensions " + data.width + "x" + data.height);
+		//Debug.Log("Received drawArray of dimensions " + data.width + "x" + data.height);
 
 		drawArrayWidth = data.width;
 		drawArrayHeight = data.height;
