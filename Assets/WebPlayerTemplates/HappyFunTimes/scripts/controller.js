@@ -544,9 +544,11 @@ requirejs([
 	// Variables and references and stuff
 	var canvas = document.getElementById("drawCanvas");
 	var bgCanvas = document.getElementById("backgroundCanvas");
+	var uiCanvas = document.getElementById("uiCanvas");
 	var debugCanvas = document.getElementById("debugCanvas");
 	var ctx = canvas.getContext("2d");
 	var bgCtx = bgCanvas.getContext("2d");
+	var uiCtx = uiCanvas.getContext("2d");
 	var debug = debugCanvas.getContext("2d");
 	var lastPt = null;
 	
@@ -571,14 +573,19 @@ requirejs([
 	// Add event listeners
 	window.addEventListener("resize", handleResize);
 	
-	canvas.addEventListener("touchmove", draw, false);
+	canvas.addEventListener("touchmove", drawMove, false);
 	canvas.addEventListener("touchend", drawEnd, false);
+	canvas.addEventListener("touchstart", drawTouchStart, false);
+	canvas.addEventListener("touchend", drawTouchEnd, false);
+	
 	
 	// Resize canvases to fit window size
 	canvas.width = window.innerWidth;
 	canvas.height = window.innerHeight;
 	bgCanvas.width = window.innerWidth;
 	bgCanvas.height = window.innerHeight;
+	uiCanvas.width = window.innerWidth;
+	uiCanvas.height = window.innerHeight;
 	debugCanvas.width = window.innerWidth;
 	debugCanvas.height = window.innerHeight;
 
@@ -609,6 +616,8 @@ requirejs([
 		canvas.height = window.innerHeight;
 		bgCanvas.width = window.innerWidth;
 		bgCanvas.height = window.innerHeight;
+		uiCanvas.width = window.innerWidth;
+		uiCanvas.height = window.innerHeight;
 		debugCanvas.width = window.innerWidth;
 		debugCanvas.height = window.innerHeight;
 		
@@ -649,7 +658,24 @@ requirejs([
 		bgCtx.fillStyle = bgOptions.fillStyle;
 	}
 	
-	function draw(event){
+	function drawTouchStart(event){
+		event.preventDefault();
+		
+		//alert("touchstart");
+		
+		ctx.beginPath();
+		ctx.arc(event.touches[0].pageX, event.touches[0].pageY, ctx.lineWidth/(Math.PI * Math.PI * Math.PI), 0, 2 * Math.PI, false);
+		ctx.stroke();
+		
+		// Store latest point
+		lastPt = {x:event.touches[0].pageX, y:event.touches[0].pageY};
+	}
+	
+	function drawTouchEnd(event){
+		event.preventDefault();
+	}
+	
+	function drawMove(event){
 		event.preventDefault();
 		
 		// Draw a small rectangle in the canvas at the touch position
@@ -692,6 +718,7 @@ requirejs([
 			}
 		}
 	}
+	
 	
 	function clearCanvas(context){
 		context.clearRect(0, 0, context.canvas.width, context.canvas.height);

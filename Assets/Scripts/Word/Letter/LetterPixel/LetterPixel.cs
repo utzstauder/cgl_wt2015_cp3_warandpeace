@@ -5,10 +5,10 @@ using System.Collections;
  * This class implements the behaviour of the pixels that make up a letter
  */
 
-[RequireComponent(typeof(SpriteRenderer))]
+[RequireComponent(typeof(ArtstyleSwitcherSprites))]
 public class LetterPixel : MonoBehaviour {
 
-	public int maxHp = 5;
+	public int maxHp = 1;
 	public int m_points = 5;
 	private int initialHp;
 	private int currentHp;
@@ -16,24 +16,24 @@ public class LetterPixel : MonoBehaviour {
 	private Letter parent;
 
 	// References
-	private SpriteRenderer spriteRenderer;
+	private ArtstyleSwitcherSprites artstyleSwitcher;
+	//private SpriteRenderer spriteRenderer;
 
 	// Use this for initialization
 	void Awake() {
-		spriteRenderer = GetComponent<SpriteRenderer>();
+		//spriteRenderer = GetComponent<SpriteRenderer>();
+		artstyleSwitcher = GetComponent<ArtstyleSwitcherSprites>();
 	}
 
 	// Use this to initialize externally (usually from script that instantiates this object)
 	public void Init(float _accuracy, Color _color){
-		initialHp = (int)Mathf.Round((float)maxHp * _accuracy);
+		//initialHp = (int)Mathf.Round((float)maxHp * _accuracy);
+		initialHp = maxHp;
+
 		currentHp = initialHp;
 
-		spriteRenderer.color = Color.Lerp(Color.black, _color, _accuracy);
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		//if (transform.position.x < deathX) Destroy(this.gameObject);
+		artstyleSwitcher.SetColor(ArtstyleManager.Style.arcade, Color.Lerp(Color.black, _color, _accuracy));
+		artstyleSwitcher.SetColor(ArtstyleManager.Style.realistic, Color.Lerp(Color.black, _color, _accuracy));
 	}
 
 	public void SetParent(Letter _parent){
@@ -43,6 +43,7 @@ public class LetterPixel : MonoBehaviour {
 
 	public void ApplyDamage(int _damage){
 		currentHp -= _damage;
+		GameManager.s_gameManager.TriggerArtstyleChange(_damage * ArtstyleManager.s_artstyleManager.m_timeFactor);
 		CheckHP();
 	}
 
@@ -50,6 +51,12 @@ public class LetterPixel : MonoBehaviour {
 		if (currentHp <= 0){
 			GameManager.s_gameManager.AddScore(m_points);
 			Destroy(this.gameObject);
+		}
+	}
+
+	void OnTriggerEnter2D(Collider2D _other){
+		if (_other.gameObject.CompareTag("Deadly")){
+			ApplyDamage(maxHp);
 		}
 	}
 

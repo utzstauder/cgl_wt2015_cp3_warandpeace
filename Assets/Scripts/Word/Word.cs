@@ -13,7 +13,7 @@ public class Word : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-	
+		InvokeRepeating("CheckChildCount", 0, 5f);
 	}
 	
 	// Update is called once per frame
@@ -24,8 +24,7 @@ public class Word : MonoBehaviour {
 			transform.position += m_speed * Time.deltaTime;
 		}
 
-
-		if (transform.position.x <= m_wordSpawner.GetDeathX()) Destroy(this.gameObject);
+		//if (transform.position.x <= m_wordSpawner.GetDeathX()) Destroy(this.gameObject);
 	}
 
 	public void CheckChildCount(){

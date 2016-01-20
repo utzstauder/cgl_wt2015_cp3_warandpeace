@@ -19,6 +19,12 @@ public class GameManager : MonoBehaviour {
 	public static GameManager s_gameManager;
 	private WordSpawner m_wordSpawner;
 
+	// Artstyle change variables
+	public bool m_artstyleDefaultMode = true;
+	private bool m_artstyleCooldownRunning = false;
+	private float m_timeUntilReset = 0.0f;
+	private float m_currentArtstyleTimer = 0.0f;
+
 	// Use this for initialization
 	void Awake () {
 		if (s_gameManager != null){
@@ -37,6 +43,11 @@ public class GameManager : MonoBehaviour {
 		PlayerManager.OnPlayerJoin += OnPlayerJoin;
 		PlayerManager.OnPlayerLeave += OnPlayerLeave;
 	}
+
+	void OnDestroy(){
+		PlayerManager.OnPlayerJoin -= OnPlayerJoin;
+		PlayerManager.OnPlayerLeave -= OnPlayerLeave;
+	}
 	
 	// Update is called once per frame
 	void Update () {
@@ -52,6 +63,8 @@ public class GameManager : MonoBehaviour {
 		if (Input.GetKey(KeyCode.R) && Input.GetKey(KeyCode.E) && Input.GetKey(KeyCode.S) && Input.GetKey(KeyCode.T)){
 			ResetGame();
 		}
+
+		//Debug.Log(m_currentArtstyleTimer + " / " + m_timeUntilReset + " => current artstyle: " + ArtstyleManager.s_artstyleManager.m_currentStyle); 
 	}
 
 	private void ChangeGameState(GameState _targetState){
@@ -88,12 +101,14 @@ public class GameManager : MonoBehaviour {
 	}
 
 	private void OnPlayerLeave(){
-		// Spawn words that are already in queue
-		PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound(PlayerManager.s_playerManager.GetNumberOfPlayersInCurrentRound() - 1);
+		if (m_currentState == GameState.playing_word){
+			// Spawn words that are already in queue
+			PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound(PlayerManager.s_playerManager.GetNumberOfPlayersInCurrentRound() - 1);
 
-		// Check if queue full
-		if (m_wordSpawner.IsQueueFull()){
-			m_wordSpawner.SpawnLettersFromQueue();
+			// Check if queue full
+			if (m_wordSpawner.IsQueueFull()){
+				m_wordSpawner.SpawnLettersFromQueue();
+			}
 		}
 	}
 
@@ -161,6 +176,32 @@ public class GameManager : MonoBehaviour {
 		m_score += _score;
 	}
 
+	public void TriggerArtstyleChange(float _time){
+		if (m_artstyleDefaultMode){
+			m_timeUntilReset += _time;
+
+			if (!m_artstyleCooldownRunning){
+				StartCoroutine(ArtstyleChangeRoutine());
+			}
+		}
+
+	}
+
+	private IEnumerator ArtstyleChangeRoutine(){
+		m_artstyleCooldownRunning = true;
+
+		ArtstyleManager.s_artstyleManager.SetArtstyle(ArtstyleManager.Style.realistic);
+
+		while (m_currentArtstyleTimer < m_timeUntilReset){
+			m_currentArtstyleTimer += Time.deltaTime;
+			yield return new WaitForEndOfFrame();
+		}
+			
+		ArtstyleManager.s_artstyleManager.SetArtstyle(ArtstyleManager.Style.arcade);
+
+		m_artstyleCooldownRunning = false;
+	}
+
 	void OnGUI(){
 		// This is for debugging only
 		if (m_debug){
@@ -181,10 +222,24 @@ public class GameManager : MonoBehaviour {
 					}
 					m_wordSpawner.SpawnWord(playerIds);
 				}
-			}*/
+			}
 			if (m_currentState == GameState.playing_word){
 				if (GUI.Button(new Rect(10, 30, 120, 20), "Send Random Letters")){
 					SendRandomLetters();
+				}
+			}*/
+			if (IsPlaying()){
+				if (GUI.Button(new Rect(10, 30, 120, 20), "ARCADE MODE")){
+					m_artstyleDefaultMode = false;
+					ArtstyleManager.s_artstyleManager.SetArtstyle(ArtstyleManager.Style.arcade);
+				}
+				if (GUI.Button(new Rect(140, 30, 120, 20), "REALISTIC MODE")){
+					m_artstyleDefaultMode = false;
+					ArtstyleManager.s_artstyleManager.SetArtstyle(ArtstyleManager.Style.realistic);
+				}
+				if (GUI.Button(new Rect(270, 30, 120, 20), "DEFAULT MODE")){
+					m_artstyleDefaultMode = true;
+					ArtstyleManager.s_artstyleManager.SetArtstyle(ArtstyleManager.Style.arcade);
 				}
 			}
 		}
@@ -209,6 +264,6 @@ public class GameManager : MonoBehaviour {
 			GUILayout.EndVertical();
 		}
 
-		GUI.Label(new Rect(20, 20, 300, 30), "SCORE: " + m_score);
+		GUI.Label(new Rect(20, 10, 300, 30), "SCORE: " + m_score);
 	}
 }

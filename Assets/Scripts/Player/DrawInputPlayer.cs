@@ -52,6 +52,7 @@ public class DrawInputPlayer : MonoBehaviour {
 		PlayerManager.s_playerManager.RemovePlayer(this);
 
 		m_gamepad.OnReceiveDrawing -= OnDrawingReceived;
+		m_gamepad.OnNameChange -= ChangeName;
 	}
 
 	// Update is called once per frame

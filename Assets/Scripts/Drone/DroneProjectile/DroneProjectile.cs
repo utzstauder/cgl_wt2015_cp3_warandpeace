@@ -3,22 +3,25 @@ using System.Collections;
 
 public class DroneProjectile : MonoBehaviour {
 
-	public Vector3 m_speed = new Vector3(300.0f, 0, 0);
+	private float m_speed = 300.0f;
+	private Vector3 m_direction = Vector3.zero;
+	private Vector3 m_destination = Vector3.zero;
+	private Vector3 m_initialPosition = Vector3.zero;
 	public int m_damage = 1;
 
 	private float deathX = 0;
 
 	// Use this for initialization
-	void Start () {
-	
+	void Awake () {
+		m_initialPosition = transform.position;
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		if (GameManager.s_gameManager.IsPlaying()){
-			transform.localPosition += m_speed * Time.deltaTime;
+			transform.localPosition += m_speed * m_direction * Time.deltaTime;
 
-			if (transform.localPosition.x >= deathX){
+			if (Vector3.Distance(transform.position, m_initialPosition) >= Vector3.Distance(m_initialPosition, m_destination)){
 				Destroy(this.gameObject);
 			}
 		}
@@ -32,8 +35,19 @@ public class DroneProjectile : MonoBehaviour {
 		deathX = _x;
 	}
 
+	public void SetDirection(Vector3 _direction){
+		m_direction = _direction;
+	}
+
+	public void SetDestination(Vector3 _destination){
+		m_destination = _destination;
+	}
+
+	public void SetSpeed(float _speed){
+		m_speed = _speed;
+	}
+
 	void OnTriggerEnter2D(Collider2D _other){
-		// Debug.Log("TriggerEnter2D");
 		if (_other.CompareTag("LetterPixel")){
 			LetterPixel letterPixel = _other.GetComponent<LetterPixel>();
 			letterPixel.ApplyDamage(m_damage);

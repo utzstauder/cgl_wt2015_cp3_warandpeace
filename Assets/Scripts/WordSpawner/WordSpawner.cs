@@ -184,7 +184,9 @@ public class WordSpawner : MonoBehaviour {
 	private LetterPixel spawnLetterPixel(Vector3 _position, float _scale, Color _color, float _accuracy){
 		LetterPixel letterPixel = Instantiate(m_letterPixelPrefab, _position, Quaternion.identity) as LetterPixel;
 
-		letterPixel.GetComponent<SpriteRenderer>().color = Color.Lerp(Color.black, _color, _accuracy);
+		letterPixel.Init(_accuracy, _color);
+
+		//letterPixel.GetComponent<SpriteRenderer>().color = Color.Lerp(Color.black, _color, _accuracy);
 		//letterPixel.GetComponent<SpriteRenderer>().sprite.pixelsPerUnit *= _scale;
 
 		return letterPixel;
