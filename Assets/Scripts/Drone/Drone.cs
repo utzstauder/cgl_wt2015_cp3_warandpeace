@@ -13,6 +13,7 @@ public class Drone : MonoBehaviour {
 	public float m_maxCrosshairDistance = 500.0f;
 	private float m_currentCrosshairDistance;
 	public float m_droneSpeed = 10.0f;
+	private Vector3 m_targetPosition;
 	public Vector2 m_movementBounds = new Vector2(100.0f, 280.0f);
 	private Vector3 m_initialPosition;
 
@@ -70,9 +71,10 @@ public class Drone : MonoBehaviour {
 			m_currentCrosshairDistance = Vector3.Distance(transform.position, m_droneCrosshair.position);
 
 			// Move drone into position
-			if (m_currentCrosshairDistance > m_maxCrosshairDistance){
-				//transform.localPosition += (m_droneCrosshair.localPosition - transform.localPosition) * m_droneSpeed * Time.deltaTime;
-				transform.localPosition = Vector3.Lerp(transform.localPosition, m_droneCrosshair.localPosition, m_droneSpeed * Time.deltaTime);
+			if (m_currentCrosshairDistance >= m_maxCrosshairDistance){
+				m_targetPosition = m_droneCrosshair.position - ((m_droneCrosshair.position - transform.position)
+					* (1.0f - (m_currentCrosshairDistance / m_maxCrosshairDistance)));
+				transform.localPosition = Vector3.Lerp(transform.localPosition, m_droneCrosshair.position, m_droneSpeed * Time.deltaTime);
 			}
 
 			m_droneProjectile.SetPosition(0, m_droneCannon.position);
@@ -146,5 +148,10 @@ public class Drone : MonoBehaviour {
 		}
 
 		m_shooting = false;
+	}
+
+	void OnDrawGizmos(){
+		Gizmos.color = Color.red;
+		Gizmos.DrawLine(transform.position, m_targetPosition);
 	}
 }

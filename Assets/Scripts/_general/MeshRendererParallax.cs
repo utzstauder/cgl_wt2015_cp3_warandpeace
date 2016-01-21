@@ -12,12 +12,13 @@ public class MeshRendererParallax : MonoBehaviour {
 
 	void Awake(){
 		renderer = GetComponent<MeshRenderer>();
+		offset.x = start;
 	}
 
 	void Update ()
 	{
 		if (GameManager.s_gameManager.IsPlaying()){
-			offset.x = start + Time.time * speed;
+			offset.x += Time.deltaTime * speed;
 
 			renderer.material.mainTextureOffset = offset;
 		}

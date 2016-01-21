@@ -25,6 +25,11 @@ public class GameManager : MonoBehaviour {
 	private float m_timeUntilReset = 0.0f;
 	private float m_currentArtstyleTimer = 0.0f;
 
+	// Menu variables
+	public int m_menuButtonWidth = 160;
+	public int m_menuButtonHeight = 20;
+	public int m_menuButtonSpacing = 40;
+
 	// Use this for initialization
 	void Awake () {
 		if (s_gameManager != null){
@@ -81,7 +86,7 @@ public class GameManager : MonoBehaviour {
 		if (PlayerManager.s_playerManager.GetNumberOfPlayers() > 0 &&
 			PlayerManager.s_playerManager.GetNumberOfPlayersInCurrentRound() <= 0 &&
 			m_currentState == GameState.playing_word){
-			SendRandomLetters();
+			StartNewRound();
 		}
 	}
 
@@ -90,12 +95,33 @@ public class GameManager : MonoBehaviour {
 		StopAllCoroutines();
 	}
 
+	/*
+	 * This function gets called whenever a previous round end or in the beginning of the game
+	 */
+	public void StartNewRound(){
+		int numberOfPlayers = PlayerManager.s_playerManager.GetNumberOfPlayers();
+		Debug.Log("numberOfPlayer :" + numberOfPlayers);
+
+		if (m_currentState == GameState.playing_word){
+			if (numberOfPlayers >= 2){
+				SendRandomWord();
+			} else {
+				ChangeGameState(GameState.playing_free);
+				// TODO: ???
+				StartNewRound();
+			}
+
+		} else if (m_currentState == GameState.playing_free){
+			
+		}
+	}
+
 	private void OnPlayerJoin(){
 		// if there is at least one player and no round is being played start one
 		if (PlayerManager.s_playerManager.GetNumberOfPlayers() > 0 &&
 			PlayerManager.s_playerManager.GetNumberOfPlayersInCurrentRound() <= 0 &&
 			m_currentState == GameState.playing_word){
-			SendRandomLetters();
+			StartNewRound();
 		}
 		// TODO: send wait message
 	}
@@ -109,13 +135,18 @@ public class GameManager : MonoBehaviour {
 			if (m_wordSpawner.IsQueueFull()){
 				m_wordSpawner.SpawnLettersFromQueue();
 			}
+
+			if (PlayerManager.s_playerManager.GetNumberOfPlayers() < 2){
+				// not enough players for word mode
+				m_currentState = GameState.playing_free;
+			}
 		}
 	}
 
 	// This is called once a word was successfully generated
 	public void OnWordSpawned(){
 		PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound(0);
-		SendRandomLetters();
+		StartNewRound();
 	}
 
 	// TODO: for testing
@@ -141,7 +172,9 @@ public class GameManager : MonoBehaviour {
 		m_wordSpawner.SpawnWord(playerIds);*/
 	}
 
-	// Start a round with random letters
+	/* Start a round with random letters
+	 * TODO: DEPRECATED
+	 */
 	public void SendRandomLetters(){
 		int currentNumberOfPlayers = PlayerManager.s_playerManager.GetNumberOfPlayers();
 		PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound(currentNumberOfPlayers);
@@ -150,6 +183,28 @@ public class GameManager : MonoBehaviour {
 
 		for (int i = 0; i < PlayerManager.s_playerManager.GetNumberOfPlayers(); i++){
 			PlayerManager.s_playerManager.GetPlayerReference(i).DrawLetterOnBackground(randomLetters[i]);
+		}
+	}
+
+	/*
+	 * Start a round with a random word
+	 * 
+	 */
+	public void SendRandomWord(){
+		int currentNumberOfPlayers = PlayerManager.s_playerManager.GetNumberOfPlayers();
+
+		PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound(currentNumberOfPlayers);
+
+		string word = WordManager.s_wordManager.GetRandomWord(currentNumberOfPlayers);
+		Debug.Log(word);
+
+		int[] wordArray = WordManager.s_wordManager.GetWordAsIntArrayFromString(word);
+
+		// shuffle array
+		ArrayFunctions.RandomizeArray(ref wordArray);
+
+		for (int i = 0; i < currentNumberOfPlayers; i++){
+			PlayerManager.s_playerManager.GetPlayerReference(i).DrawLetterOnBackground(wordArray[i]);
 		}
 	}
 
@@ -249,15 +304,19 @@ public class GameManager : MonoBehaviour {
 			// Menu
 			GUILayout.BeginVertical();
 
-			if (GUI.Button(new Rect(Screen.width/2 - 50, Screen.height/2 -20, 100, 20), "WORD MODE")){
+			if (GUI.Button(new Rect(Screen.width/2 - 50, Screen.height/2 - m_menuButtonSpacing * 1.5f , m_menuButtonWidth, m_menuButtonHeight), "WORD MODE")){
 				ChangeGameState(GameState.playing_word);
 			}
 
-			if (GUI.Button(new Rect(Screen.width/2 - 50, Screen.height/2 + 20, 100, 20), "FREE MODE")){
+			if (GUI.Button(new Rect(Screen.width/2 - 50, Screen.height/2 - m_menuButtonSpacing/2, m_menuButtonWidth, m_menuButtonHeight), "FREE MODE")){
 				ChangeGameState(GameState.playing_free);
 			}
 
-			if (GUI.Button(new Rect(Screen.width/2 - 50, Screen.height/2 + 60, 100, 20), "QUIT GAME")){
+			if (GUI.Button(new Rect(Screen.width/2 - 50, Screen.height/2 + m_menuButtonSpacing/2, m_menuButtonWidth, m_menuButtonHeight), "OPEN QUESTIONAIRE")){
+				Application.OpenURL("https://docs.google.com/forms/d/1DUZs3-u70XKN4UzRwLdavks2_PsPnbGpu0_gVTBcvS8/viewform");
+			}
+
+			if (GUI.Button(new Rect(Screen.width/2 - 50, Screen.height/2 + m_menuButtonSpacing * 1.5f , m_menuButtonWidth, m_menuButtonHeight), "QUIT GAME")){
 				Application.Quit();
 			}
 

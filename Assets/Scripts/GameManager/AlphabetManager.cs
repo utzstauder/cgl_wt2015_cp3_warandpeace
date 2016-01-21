@@ -110,6 +110,42 @@ public class AlphabetManager : MonoBehaviour {
 		return array;
 	}
 
+	public static int CharToInt(char _char){
+		int returnInt = -1;
+
+		switch (_char){
+			case 'a': returnInt = 0; break;
+			case 'b': returnInt = 1; break;
+			case 'c': returnInt = 2; break;
+			case 'd': returnInt = 3; break;
+			case 'e': returnInt = 4; break;
+			case 'f': returnInt = 5; break;
+			case 'g': returnInt = 6; break;
+			case 'h': returnInt = 7; break;
+			case 'i': returnInt = 8; break;
+			case 'j': returnInt = 9; break;
+			case 'k': returnInt = 10; break;
+			case 'l': returnInt = 11; break;
+			case 'm': returnInt = 12; break;
+			case 'n': returnInt = 13; break;
+			case 'o': returnInt = 14; break;
+			case 'p': returnInt = 15; break;
+			case 'q': returnInt = 16; break;
+			case 'r': returnInt = 17; break;
+			case 's': returnInt = 18; break;
+			case 't': returnInt = 19; break;
+			case 'u': returnInt = 20; break;
+			case 'v': returnInt = 21; break;
+			case 'w': returnInt = 22; break;
+			case 'x': returnInt = 23; break;
+			case 'y': returnInt = 24; break;
+			case 'z': returnInt = 25; break;
+			default: break;
+		}
+
+		return returnInt;
+	}
+
 	public static int to255(float t){
 		return (int)(t * 255) | 0;
 	}

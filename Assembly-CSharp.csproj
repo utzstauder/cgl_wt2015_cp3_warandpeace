@@ -65,6 +65,7 @@
      <Compile Include="Assets\HappyFunTimes\Scripts\HFTSounds.cs" />
      <Compile Include="Assets\Scripts\CameraDolly\CameraDolly.cs" />
      <Compile Include="Assets\Scripts\Drone\Drone.cs" />
+     <Compile Include="Assets\Scripts\Drone\DroneArcadeShadow.cs" />
      <Compile Include="Assets\Scripts\Drone\DroneInput.cs" />
      <Compile Include="Assets\Scripts\Drone\DroneProjectile\DroneProjectile.cs" />
      <Compile Include="Assets\Scripts\GameManager\AlphabetManager.cs" />
@@ -79,9 +80,11 @@
      <Compile Include="Assets\Scripts\Word\Word.cs" />
      <Compile Include="Assets\Scripts\WordSpawner\WordSpawner.cs" />
      <Compile Include="Assets\Scripts\_general\AnimationOffset.cs" />
+     <Compile Include="Assets\Scripts\_general\ArrayFunctions.cs" />
      <Compile Include="Assets\Scripts\_general\ArtstyleSwitcherAudio.cs" />
      <Compile Include="Assets\Scripts\_general\ArtstyleSwitcherGameObjects.cs" />
      <Compile Include="Assets\Scripts\_general\ArtstyleSwitcherSprites.cs" />
+     <Compile Include="Assets\Scripts\_general\CSVReader.cs" />
      <Compile Include="Assets\Scripts\_general\Drawing.cs" />
      <Compile Include="Assets\Scripts\_general\MeshRendererParallax.cs" />
      <Compile Include="Assets\Scripts\_general\Wiggle.cs" />
