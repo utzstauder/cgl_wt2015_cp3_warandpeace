@@ -5,7 +5,6 @@ using System.Collections;
  * This class implements the behaviour of the pixels that make up a letter
  */
 
-[RequireComponent(typeof(ArtstyleSwitcherSprites))]
 public class LetterPixel : MonoBehaviour {
 
 	public int maxHp = 1;
@@ -13,16 +12,15 @@ public class LetterPixel : MonoBehaviour {
 	private int initialHp;
 	private int currentHp;
 
-	private Letter parent;
+	public SpriteRenderer m_spriteRendererArcade;
+	public SpriteRenderer m_spriteRendererRealisticFaceless;
+	public SpriteRenderer m_spriteRendererRealisticFacemore;
 
-	// References
-	private ArtstyleSwitcherSprites artstyleSwitcher;
-	//private SpriteRenderer spriteRenderer;
+	private Letter parent;
 
 	// Use this for initialization
 	void Awake() {
-		//spriteRenderer = GetComponent<SpriteRenderer>();
-		artstyleSwitcher = GetComponent<ArtstyleSwitcherSprites>();
+		
 	}
 
 	// Use this to initialize externally (usually from script that instantiates this object)
@@ -32,8 +30,9 @@ public class LetterPixel : MonoBehaviour {
 
 		currentHp = initialHp;
 
-		artstyleSwitcher.SetColor(ArtstyleManager.Style.arcade, Color.Lerp(Color.black, _color, _accuracy));
-		artstyleSwitcher.SetColor(ArtstyleManager.Style.realistic, Color.Lerp(Color.black, _color, _accuracy));
+		if (m_spriteRendererArcade) m_spriteRendererArcade.color = Color.Lerp(Color.black, _color, _accuracy);
+		if (m_spriteRendererRealisticFaceless) m_spriteRendererRealisticFaceless.color = Color.Lerp(Color.black, _color, _accuracy);
+		if (m_spriteRendererRealisticFacemore) m_spriteRendererRealisticFacemore.color = SkincolorManager.s_skincolorManager.GetRandomSkincolor();
 	}
 
 	public void SetParent(Letter _parent){

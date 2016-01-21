@@ -132,9 +132,8 @@ public class WordSpawner : MonoBehaviour {
 				for (int x = 0; x < _drawing.width; x += 1*m_arrayDivisionFactor){
 					if (_drawing.drawing[_drawing.width*y + x] > 0){
 						position = _position + new Vector3((x * _drawing.gap) - (_drawing.width / 2 * _drawing.gap), (_drawing.height / 2 * _drawing.gap) - (y * _drawing.gap), 0) * letterScale;
-						LetterPixel pixel = spawnLetterPixel(position, 1f, color, _drawing.accuracy);
+						LetterPixel pixel = spawnLetterPixel(position, letterScale * m_arrayDivisionFactor, color, _drawing.accuracy);
 						pixel.transform.SetParent(letter.transform);
-						pixel.transform.localScale *= m_arrayDivisionFactor;
 					}
 				}
 			}
@@ -157,7 +156,7 @@ public class WordSpawner : MonoBehaviour {
 		int gap = player.GetDrawingDivision();
 		Color color = player.GetPlayerColor();
 		Vector3 position = Vector3.zero;
-		float pixelScale = player.letterPixelScale * player.letterScale;
+		float pixelScale = player.letterScale;
 
 		if (drawing != null){
 			Letter letter = Instantiate(m_letterPrefab, _position, Quaternion.identity) as Letter;
@@ -166,9 +165,8 @@ public class WordSpawner : MonoBehaviour {
 				for (int x = 0; x < width; x += 1*m_arrayDivisionFactor){
 					if (drawing[width*y + x] > 0){
 						position = _position + new Vector3((x * gap) - (width / 2 * gap), (height / 2 * gap) - (y * gap), 0) * player.letterScale;
-						LetterPixel pixel = spawnLetterPixel(position, pixelScale, color, accuracy);
+						LetterPixel pixel = spawnLetterPixel(position, pixelScale * (m_arrayDivisionFactor/2.0f), color, accuracy);
 						pixel.transform.SetParent(letter.transform);
-						pixel.transform.localScale *= m_arrayDivisionFactor;
 					}
 				}
 			}
@@ -183,7 +181,7 @@ public class WordSpawner : MonoBehaviour {
 	// Spawns a letterPixel
 	private LetterPixel spawnLetterPixel(Vector3 _position, float _scale, Color _color, float _accuracy){
 		LetterPixel letterPixel = Instantiate(m_letterPixelPrefab, _position, Quaternion.identity) as LetterPixel;
-
+		letterPixel.transform.localScale *= _scale;
 		letterPixel.Init(_accuracy, _color);
 
 		//letterPixel.GetComponent<SpriteRenderer>().color = Color.Lerp(Color.black, _color, _accuracy);

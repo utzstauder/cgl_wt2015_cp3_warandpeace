@@ -6,6 +6,7 @@ public class DroneInput : MonoBehaviour {
 	private float m_input_x;
 	private float m_input_y;
 	private bool m_input_fire;
+	private bool m_input_fireAlt;
 
 	public bool m_allowAutoFire = true;
 	public bool m_autoPilot = false;
@@ -25,6 +26,8 @@ public class DroneInput : MonoBehaviour {
 		} else{
 			m_input_fire = Input.GetButtonDown("Fire1");
 		}
+
+		m_input_fireAlt = Input.GetButtonDown("Fire2");
 	}
 
 	public Vector3 GetMovementDirection(){
@@ -33,6 +36,10 @@ public class DroneInput : MonoBehaviour {
 
 	public bool GetFirePressed(){
 		return m_input_fire;
+	}
+
+	public bool GetFireAltPressed(){
+		return m_input_fireAlt;
 	}
 
 	public bool IsInAutoPilot(){

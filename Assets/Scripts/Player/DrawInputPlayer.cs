@@ -25,7 +25,7 @@ public class DrawInputPlayer : MonoBehaviour {
 
 	public Letter letterPrefab;
 	public LetterPixel letterPixelPrefab;
-	public float letterPixelScale = 7.0f;
+	//public float letterPixelScale = 7.0f;
 	public float letterScale = .5f;
 
 	void Awake(){
@@ -202,7 +202,7 @@ public class DrawInputPlayer : MonoBehaviour {
 
 		Vector3 position;
 
-		letterPixelPrefab.transform.localScale = Vector3.one * letterPixelScale * gap * letterScale;
+		letterPixelPrefab.transform.localScale = Vector3.one * gap * letterScale;
 
 		Letter letter = (Letter)Instantiate(letterPrefab, transform.position, Quaternion.identity);
 
@@ -216,8 +216,6 @@ public class DrawInputPlayer : MonoBehaviour {
 				}
 			}
 		}
-			
-		//letter.transform.localScale = Vector3.one * letterScale;
 	}
 
 	void DeletePixelsFromScene(){
