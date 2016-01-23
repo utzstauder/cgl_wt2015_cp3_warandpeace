@@ -97,18 +97,24 @@ img {
     height: 100%;
 }
 
-#touch, #orient, #draw {
+#touch, #orient {
     z-index: 5;
     color: white;
 }
 
 
-#drawCanvas, #backgroundCanvas {
+#drawCanvas, #backgroundCanvas, #uiCanvas, #debugCanvas, #inputCanvas {
 	position: absolute;
 	top: 0;
 	height: 100%;
 	width: 100%;
 }
+
+#backgroundCanvas { z-index: 1; }
+#drawCanvas { z-index: 2; }
+#uiCanvas { z-index: 3; }
+#debugCanvas { z-index: 4; }
+#inputCanvas { z-index: 5; }
 
 #full {
     display: none;

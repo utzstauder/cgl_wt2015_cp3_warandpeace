@@ -244,6 +244,7 @@ requirejs([
   client.addEventListener('backgroundOptions', handleBackgroundOptions);
   client.addEventListener('receiveLetter', handleReceiveLetter);
   client.addEventListener('pullDrawing', handlePullDrawing);
+  //TODO: client.addEventListener('notification', handleReceiveNotification);
 
   // This way of making buttons probably looks complicated but
   // it lets us easily make more buttons.
@@ -546,6 +547,7 @@ requirejs([
 	var bgCanvas = document.getElementById("backgroundCanvas");
 	var uiCanvas = document.getElementById("uiCanvas");
 	var debugCanvas = document.getElementById("debugCanvas");
+	var inputCanvas = document.getElementById("inputCanvas");
 	var ctx = canvas.getContext("2d");
 	var bgCtx = bgCanvas.getContext("2d");
 	var uiCtx = uiCanvas.getContext("2d");
@@ -561,24 +563,50 @@ requirejs([
 	var drawArrayDivision = 1;
 	var defaultAccuracy = 0.5;
 	var accuracyThreshold = 0.75;
+
+	var isMouseDown = false;
 	
 	// letter variables
 	var letterScale = 4;
-	bgCtx.fillStyle ="black";
+	bgCtx.fillStyle = "black";
 	
 	var currentLetter = null;
 	var currentLetterWidth = null;
 	var currentLetterHeight = null;
-	
+
+	// notification variables
+	var drawingEnabled = true;
+	var notificationShowing = false;
+	var notificationText = "THIS IS A RANDOM NOTIFICATION!";
+
+	// UI variables
+	var uiButtonBackground = "white";
+	var uiButtonFontColor = "black";
+	var uiButtonFont = "30px Arial";
+
 	// Add event listeners
 	window.addEventListener("resize", handleResize);
 	
-	canvas.addEventListener("touchmove", drawMove, false);
-	canvas.addEventListener("touchend", drawEnd, false);
-	canvas.addEventListener("touchstart", drawTouchStart, false);
+	/*canvas.addEventListener("touchmove", drawTouchMove, false);
 	canvas.addEventListener("touchend", drawTouchEnd, false);
-	
-	
+	canvas.addEventListener("touchstart", drawTouchStart, false);
+
+	canvas.addEventListener("mousedown", drawMouseDown, false);
+	canvas.addEventListener("mouseup", drawMouseUp, false);
+	canvas.addEventListener("mousemove", drawMouseMove, false);
+
+	uiCanvas.addEventListener("touchstart", uiTouchStart, false);
+	uiCanvas.addEventListener("mousedown", uiMouseDown, false);*/
+
+	inputCanvas.addEventListener("touchstart", inputTouchStart, false);
+	inputCanvas.addEventListener("touchend", inputTouchEnd, false);
+	inputCanvas.addEventListener("touchmove", inputTouchMove, false);
+
+	inputCanvas.addEventListener("mousedown", inputMouseDown, false);
+	inputCanvas.addEventListener("mouseup", inputMouseUp, false);
+	inputCanvas.addEventListener("mousemove", inputMouseMove, false);
+
+
 	// Resize canvases to fit window size
 	canvas.width = window.innerWidth;
 	canvas.height = window.innerHeight;
@@ -588,6 +616,12 @@ requirejs([
 	uiCanvas.height = window.innerHeight;
 	debugCanvas.width = window.innerWidth;
 	debugCanvas.height = window.innerHeight;
+	inputCanvas.height = window.innerHeight;
+	inputCanvas.width = window.innerWidth;
+
+	// UI buttons
+	var buttonClear = button("clear", 0, (uiCanvas.height - uiCanvas.height/10), (uiCanvas.width / 2), uiCanvas.height/10);
+	var buttonSend = button("send", (uiCanvas.width / 2), (uiCanvas.height - uiCanvas.height/10), (uiCanvas.width / 2), uiCanvas.height/10);
 
 	// Check for device motion
 	if (window.DeviceMotionEvent || window.DeviceMotion){
@@ -602,6 +636,9 @@ requirejs([
 		// enable vibration
 		navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate;
 	}
+
+	// draw UI and all that stuff for the first time
+	redrawAll();
 
 	// initialization end
 	// +++++++++++++++++++++++++++++++++++
@@ -620,17 +657,63 @@ requirejs([
 		uiCanvas.height = window.innerHeight;
 		debugCanvas.width = window.innerWidth;
 		debugCanvas.height = window.innerHeight;
+		inputCanvas.height = window.innerHeight;
+		inputCanvas.width = window.innerWidth;
 		
 		ctx.lineWidth = lineWidthTmp;
 		ctx.lineCap = lineCapTmp;
 		ctx.strokeStyle = strokeStyleTmp;
 		bgCtx.fillStyle = bgFillStyleTmp;
-		
-		if (currentLetter !== null && gameState == "playing_word"){
-			drawLetterOnBgCanvas();
-		}
+
+		redrawAll();
+	}
+
+	// START
+	// communication handler
+
+	function handlePullDrawing(data){
+		sendDrawArray();
 	}
 	
+	function handleReceiveLetter(data){
+		//alert(data.width + " x " + data.height + " = " + data.drawArray.length);
+		
+		//clear canvas first
+		clearCanvas(bgCtx);
+		clearCanvas(ctx);
+		
+		// array is upside down
+		var flippedArray = flipArrayHorizontally(data.width, data.height, data.drawArray);
+		// array is smaller than canvas
+		var scaledArray = scaleUpArray(data.width, data.height, flippedArray, letterScale, letterScale);
+	
+		// calculate scaled dimensions
+		var newWidth = data.width * letterScale;
+		var newHeight = data.height * letterScale;
+		
+		/*
+		// draw the received letter on the background canvas
+		for (var y = 0; y < bgCanvas.height; y++){
+			for (var x = 0; x < bgCanvas.width; x++){
+				// check for end of boundaries
+				if ((y * newWidth + x) < scaledArray.length){
+					if (scaledArray[y * newWidth + x] > 0){
+						bgCtx.fillRect(x, y, 1, 1);
+					}
+				}
+			}
+		}
+		*/
+		
+		// set variables
+		currentLetterWidth = newWidth;
+		currentLetterHeight = newHeight;
+		currentLetter = scaledArray;
+		
+		drawLetterOnBgCanvas();
+		drawUI();
+	}
+
 	// Overrides draw options
 	function handleDrawOptions(data){
 		var drawOptions = data.drawOptions;
@@ -650,84 +733,36 @@ requirejs([
 			clearCanvas(bgCtx);
 		}
 	}
-	
+
+	// Overrides background options
+	// Templates for the background canvas
 	function handleBackgroundOptions(data){
 		var bgOptions = data.backgroundOptions;
 		
 		letterScale = bgOptions.letterScale;
 		bgCtx.fillStyle = bgOptions.fillStyle;
 	}
-	
-	function drawTouchStart(event){
-		event.preventDefault();
-		
-		//alert("touchstart");
-		
-		ctx.beginPath();
-		ctx.arc(event.touches[0].pageX, event.touches[0].pageY, ctx.lineWidth/(Math.PI * Math.PI * Math.PI), 0, 2 * Math.PI, false);
-		ctx.stroke();
-		
-		// Store latest point
-		lastPt = {x:event.touches[0].pageX, y:event.touches[0].pageY};
-	}
-	
-	function drawTouchEnd(event){
-		event.preventDefault();
-	}
-	
-	function drawMove(event){
-		event.preventDefault();
-		
-		// Draw a small rectangle in the canvas at the touch position
-		// ctx.fillRect(event.touches[0].pageX, event.touches[0].pageY, 5, 5);
-		
-		// Draw a continuous path
-		if (lastPt != null){			
-			ctx.beginPath();
-			ctx.moveTo(lastPt.x, lastPt.y);
-			//ctx.lineTo(event.touches[0].pageX, event.touches[0].pageY);
-			ctx.quadraticCurveTo(lastPt.x, lastPt.y, event.touches[0].pageX, event.touches[0].pageY);
-			ctx.stroke();
-		}
-		
-		
-		// Store latest point
-		lastPt = {x:event.touches[0].pageX, y:event.touches[0].pageY};
-	}
-	
-	function drawEnd(event){
-		event.preventDefault();
-		
-		//alert("touch release");
-		// tmp
-		//sendDrawArray();
-		
-		// Terminate touch path
-		lastPt = null;
-		
-		// If in word mode check for accuracy of drawing and send to game if complete
-		if (currentLetter !== null && gameState === "playing_word"){
-			
-			var accuracy = compareCanvas(bgCtx, ctx);
-			/*var drawArray = createDrawArray(ctx);
-			var accuracy = compareArrays(currentLetter, drawArray);*/
-			//alert(accuracy);
-			if (accuracy >= accuracyThreshold){
-				sendDrawArray(accuracy);
-				currentLetter = null;
-			}
-		}
-	}
-	
-	
-	function clearCanvas(context){
-		context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-		/*if (navigator.vibrate) {
-			// vibration API supported
-			navigator.vibrate(1000);
-		}*/
-	}
-	
+
+	// This function handles and displays notification data from the game server
+	// notifications are prompts that disappear once they are clicked
+	// "new round has stared! you are on team read! have fun!" *click* notification disappears 
+	// TODO: implement server end
+	/*function handleReceiveNotification(data){
+		notificationShowing = true;
+		drawingEnabled = false;
+
+		// TODO: implement data handling
+
+		drawNotification():
+	}*/
+
+	// communication handler
+	// END
+
+
+	// START
+	// misc event handlers
+
 	function deviceMotionHandler(event){
 			var accelerationIncludingGravity = event.accelerationIncludingGravity;
 			var acceleration = event.acceleration;
@@ -763,7 +798,300 @@ requirejs([
 				}*/
 			}
 	}
+
+	// misc event handlers
+	// END
+
+
+	// START
+	// input canvas handling
+
+	function inputTouchStart(event){
+		event.preventDefault();
+
+		if (notificationShowing){
+			dismissNotification();
+		} else if (buttonCollision(buttonClear, event.touches[0].pageX, event.touches[0].pageY)){
+					buttonClearPressed();
+				} else if (buttonCollision(buttonSend, event.touches[0].pageX, event.touches[0].pageY)){
+					buttonSendPressed();
+				} else{
+					if (drawingEnabled) drawTouchStart(event);
+				}
+
+
+	}
+
+	function inputTouchEnd(event){
+		event.preventDefault();
+		if (drawingEnabled) drawTouchEnd(event);
+	}
+
+	function inputTouchMove(event){
+		event.preventDefault();
+		if (drawingEnabled) drawTouchMove(event);
+	}
+
+	function inputMouseDown(event){
+		event.preventDefault();
+
+		if (notificationShowing){
+			dismissNotification();
+		} else if (buttonCollision(buttonClear, event.pageX, event.pageY)){
+					buttonClearPressed();
+				} else if (buttonCollision(buttonSend, event.pageX, event.pageY)){
+					buttonSendPressed();
+				} else{
+					if (drawingEnabled) drawMouseDown(event);
+				}
+
+	}
+
+	function inputMouseUp(event){
+		event.preventDefault();
+		if (drawingEnabled) drawMouseUp(event);
+	}
+
+	function inputMouseMove(event){
+		event.preventDefault();
+		if (drawingEnabled) drawMouseMove(event);
+	}
+
+	// input canvas handling
+	// END
+
+
+	// START
+	// touch input functions for the draw canvas
+
+	function drawTouchStart(event){
+		event.preventDefault();
+		
+		ctx.beginPath();
+		ctx.arc(event.touches[0].pageX, event.touches[0].pageY, ctx.lineWidth/(Math.PI * Math.PI * Math.PI), 0, 2 * Math.PI, false);
+		ctx.stroke();
+		
+		// Store latest point
+		lastPt = {x:event.touches[0].pageX, y:event.touches[0].pageY};
+	}
 	
+	function drawTouchMove(event){
+		event.preventDefault();
+
+		// Draw a continuous path
+		if (lastPt != null){			
+			ctx.beginPath();
+			ctx.moveTo(lastPt.x, lastPt.y);
+			//ctx.lineTo(event.touches[0].pageX, event.touches[0].pageY);
+			ctx.quadraticCurveTo(lastPt.x, lastPt.y, event.touches[0].pageX, event.touches[0].pageY);
+			ctx.stroke();
+		}
+
+		// Store latest point
+		lastPt = {x:event.touches[0].pageX, y:event.touches[0].pageY};
+	}
+	
+	function drawTouchEnd(event){
+		event.preventDefault();
+		
+		// Terminate touch path
+		lastPt = null;
+		
+		// If in word mode check for accuracy of drawing and send to game if complete
+		if (currentLetter !== null && gameState === "playing_word"){
+			
+			var accuracy = compareCanvas(bgCtx, ctx);
+
+			if (accuracy >= accuracyThreshold){
+				sendDrawArray(accuracy);
+				currentLetter = null;
+			}
+		}
+	}
+
+	// touch input functions for the draw canvas
+	// END
+
+
+	// START
+	// mouse input functions for the draw canvas
+
+	function drawMouseDown(event){
+		event.preventDefault();
+
+		isMouseDown = true;
+		
+		ctx.beginPath();
+		ctx.arc(event.pageX, event.pageY, ctx.lineWidth/(Math.PI * Math.PI * Math.PI), 0, 2 * Math.PI, false);
+		ctx.stroke();
+		
+		// Store latest point
+		lastPt = {x:event.pageX, y:event.pageY};
+	}
+	
+	function drawMouseMove(event){
+		event.preventDefault();
+		if (isMouseDown === true){
+			// Draw a continuous path
+			if (lastPt != null){			
+				ctx.beginPath();
+				ctx.moveTo(lastPt.x, lastPt.y);
+				//ctx.lineTo(event.touches[0].pageX, event.touches[0].pageY);
+				ctx.quadraticCurveTo(lastPt.x, lastPt.y, event.pageX, event.pageY);
+				ctx.stroke();
+			}
+
+			// Store latest point
+			lastPt = {x:event.pageX, y:event.pageY};
+		}
+	}
+	
+	function drawMouseUp(event){
+		event.preventDefault();
+		
+		// Terminate touch path
+		lastPt = null;
+		
+		// If in word mode check for accuracy of drawing and send to game if complete
+		if (currentLetter !== null && gameState === "playing_word"){
+			
+			var accuracy = compareCanvas(bgCtx, ctx);
+
+			if (accuracy >= accuracyThreshold){
+				sendDrawArray(accuracy);
+				currentLetter = null;
+			}
+		}
+
+		isMouseDown = false;
+	}
+
+	// mouse input functions for the draw canvas
+	// END	
+
+
+	// START
+	// canvas helper
+
+	function clearCanvas(context){
+		context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+		/*if (navigator.vibrate) {
+			// vibration API supported
+			navigator.vibrate(1000);
+		}*/
+	}
+
+	// redraws everything that should be visible
+	function redrawAll(){
+
+		if (currentLetter !== null && gameState == "playing_word"){
+			drawLetterOnBgCanvas();
+		}
+
+		// TODO: draw UI
+
+		drawUI();
+	}
+
+	// canvas helper
+	// END
+
+
+	// START
+	// UI functions
+
+	// should be called everytime something is drawn on ANY canvas and should be drawn last
+	// TODO: deprecated
+	function drawUI(){
+		if (notificationShowing){
+			drawNotification();
+		} else {
+			drawButton(buttonClear);
+			drawButton(buttonSend);
+		}
+	}
+
+	// creates a new button object
+	function button(_text, _x, _y, _width, _height){
+		var button = {text: _text, x: _x, y: _y, width: _width, height: _height};
+
+		return button;
+	}
+
+	// is called when buttonClear is pressed
+	function buttonClearPressed(){
+		clearCanvas(ctx);
+	}
+
+	// is called when buttonSend is pressed
+	function buttonSendPressed(){
+		if (currentLetter !== null && gameState === "playing_word"){
+			
+			var accuracy = compareCanvas(bgCtx, ctx);
+
+			sendDrawArray(accuracy);
+			currentLetter = null;
+		} else if (gameState === "playing_free"){
+			sendDrawArray(defaultAccuracy);
+		}
+	}
+
+	// use this to check if a button was pressed
+	function buttonCollision(_button, _x, _y){
+		//alert(_x + "/" + _y + " <=> " + _button.x + "/" + _button.y);
+
+		if (_y >= _button.y &&
+			_y <= _button.y + _button.height &&
+			_x >= _button.x &&
+			_x <= _button.x + _button.width) return true;
+
+		return false;
+	}
+
+	function drawNotification(){
+		uiCtx.fillStyle = "white";
+		uiCtx.fillRect(0, 0, uiCtx.canvas.width, uiCtx.canvas.height);
+
+		uiCtx.fillStyle = "black";
+		uiCtx.font = "50px arial";
+		uiCtx.fontBaseline = "middle";
+		uiCtx.textAlign = "center";
+		uiCtx.fillText(notificationText, uiCtx.canvas.width/2, uiCtx.canvas.height/2);
+	}
+
+	function dismissNotification(){
+		showingNotification = false;
+		drawingEnabled = true;
+		clearCanvas(uiCtx);
+		drawUI();
+	}
+
+	// draws a button on the uiCanvas element
+	function drawButton(_button){
+		uiCtx.beginPath();
+
+		uiCtx.rect(_button.x, _button.y, _button.width, _button.height);
+		uiCtx.fillStyle = uiButtonBackground;
+		uiCtx.fill();
+
+		uiCtx.strokeStyle = "black";
+		uiCtx.lineWidth = 8;
+		uiCtx.stroke();
+
+		uiCtx.fillStyle = uiButtonFontColor;
+		uiCtx.font = uiButtonFont;
+		uiCtx.textAlign = "center";
+		uiCtx.textBaseline = "middle";
+		uiCtx.fillText(_button.text, _button.x + _button.width/2, _button.y + _button.height/2, _button.width);
+	}
+
+	// UI functions
+	// END
+
+
+	// START
+	// array helper functions
+
 	function flipArrayHorizontally(width, height, targetArray){
 		var newArray = [];
 		
@@ -803,7 +1131,46 @@ requirejs([
 		
 		return newArray;	
 	}
+
+	function compareArrays(templateArray, drawArray){
+		// scale drawArray to template size
+		//var scaleFactor = ctx.canvas.width / currentLetterWidth;
+		//var scaledTemplateArray = scaleUpArray(currentLetterWidth, currentLetterHeight, templateArray, scaleFactor, scaleFactor);
+
+		//alert("scaleFactor: " + scaleFactor + ", " + scaledTemplateArray.length + " & " + drawArray.length);
+		
+		var templatePixels = 0;
+		var matchingPixels = 0;
+		var accuracy = 0.0;
+		
+		for (var i = 0; i < drawArray.length; i++){
+			if (templateArray[i] > 1){
+				templatePixels++;
+				if (drawArray[i] > 1) matchingPixels++;
+			}
+		}
+		
+		accuracy = matchingPixels / templatePixels;
+				
+		return accuracy;
+	}
 	
+	function createDrawArray(context){
+		var width = context.canvas.width;
+		var height = context.canvas.height;
+		var imageData = context.getImageData(0, 0, width, height);
+		
+		var drawArray = [];
+		for (var i = 3; i < (width*height*4); i += 4){
+			drawArray.push(imageData.data[i]);
+		}
+		return drawArray;
+	}
+
+	// array helper functions
+	// END
+
+
 	function compareCanvas(contextTemplate, contextDraw){
 		var arrayTemplate = createDrawArray(contextTemplate);
 		var arrayDraw = createDrawArray(contextDraw);
@@ -848,41 +1215,6 @@ requirejs([
 		//alert(accuracy);
 
 		return accuracy;
-	}
-	
-	function compareArrays(templateArray, drawArray){
-		// scale drawArray to template size
-		//var scaleFactor = ctx.canvas.width / currentLetterWidth;
-		//var scaledTemplateArray = scaleUpArray(currentLetterWidth, currentLetterHeight, templateArray, scaleFactor, scaleFactor);
-
-		//alert("scaleFactor: " + scaleFactor + ", " + scaledTemplateArray.length + " & " + drawArray.length);
-		
-		var templatePixels = 0;
-		var matchingPixels = 0;
-		var accuracy = 0.0;
-		
-		for (var i = 0; i < drawArray.length; i++){
-			if (templateArray[i] > 1){
-				templatePixels++;
-				if (drawArray[i] > 1) matchingPixels++;
-			}
-		}
-		
-		accuracy = matchingPixels / templatePixels;
-				
-		return accuracy;
-	}
-	
-	function createDrawArray(context){
-		var width = context.canvas.width;
-		var height = context.canvas.height;
-		var imageData = context.getImageData(0, 0, width, height);
-		
-		var drawArray = [];
-		for (var i = 3; i < (width*height*4); i += 4){
-			drawArray.push(imageData.data[i]);
-		}
-		return drawArray;
 	}
 	
 	function drawLetterOnBgCanvas(){
@@ -933,48 +1265,6 @@ requirejs([
 		
 		// Send the data to the game server
 		client.sendCmd('draw', {width: width, height: height, drawArray: sendArray, accuracy: drawAccuracy});
-	}
-	
-	function handlePullDrawing(data){
-		sendDrawArray();
-	}
-	
-	function handleReceiveLetter(data){
-		//alert(data.width + " x " + data.height + " = " + data.drawArray.length);
-		
-		//clear canvas first
-		clearCanvas(bgCtx);
-		clearCanvas(ctx);
-		
-		// array is upside down
-		var flippedArray = flipArrayHorizontally(data.width, data.height, data.drawArray);
-		// array is smaller than canvas
-		var scaledArray = scaleUpArray(data.width, data.height, flippedArray, letterScale, letterScale);
-	
-		// calculate scaled dimensions
-		var newWidth = data.width * letterScale;
-		var newHeight = data.height * letterScale;
-		
-		/*
-		// draw the received letter on the background canvas
-		for (var y = 0; y < bgCanvas.height; y++){
-			for (var x = 0; x < bgCanvas.width; x++){
-				// check for end of boundaries
-				if ((y * newWidth + x) < scaledArray.length){
-					if (scaledArray[y * newWidth + x] > 0){
-						bgCtx.fillRect(x, y, 1, 1);
-					}
-				}
-			}
-		}
-		*/
-		
-		// set variables
-		currentLetterWidth = newWidth;
-		currentLetterHeight = newHeight;
-		currentLetter = scaledArray;
-		
-		drawLetterOnBgCanvas();
 	}
 
 });

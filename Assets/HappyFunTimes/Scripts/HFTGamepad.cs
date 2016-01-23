@@ -181,6 +181,27 @@ public class HFTGamepad : MonoBehaviour {
 
 	public BackgroundOptions backgroundOptions;
 
+	// Custom notification class
+	// TODO: implement the rest
+	[System.Serializable]
+	public class Notification{
+
+		public string text = "This is a notification.";
+
+		public Notification(){
+		}
+
+		public Notification(Notification src){
+			text = src.text;
+		}
+
+		public bool SameValues(Notification other) {
+			return text == other.text;
+		}
+	}
+
+	public Notification notification;
+
   HFTGamepad() {
     axes = new float[33];
     buttons = new Button[28];

@@ -22,13 +22,16 @@ public class GameManager : MonoBehaviour {
 	// Artstyle change variables
 	public bool m_artstyleDefaultMode = true;
 	private bool m_artstyleCooldownRunning = false;
-	private float m_timeUntilReset = 0.0f;
+	private float m_timeUntilReset = 1.0f;
 	private float m_currentArtstyleTimer = 0.0f;
 
 	// Menu variables
 	public int m_menuButtonWidth = 160;
 	public int m_menuButtonHeight = 20;
 	public int m_menuButtonSpacing = 40;
+
+	// Game loop variables
+	private bool m_roundStarted = false;
 
 	// Use this for initialization
 	void Awake () {
@@ -69,7 +72,8 @@ public class GameManager : MonoBehaviour {
 			ResetGame();
 		}
 
-		//Debug.Log(m_currentArtstyleTimer + " / " + m_timeUntilReset + " => current artstyle: " + ArtstyleManager.s_artstyleManager.m_currentStyle); 
+		//Debug.Log(m_currentArtstyleTimer + " / " + m_timeUntilReset + " => current artstyle: " + ArtstyleManager.s_artstyleManager.m_currentStyle);
+		//Debug.Log(m_timeUntilReset - m_currentArtstyleTimer);
 	}
 
 	private void ChangeGameState(GameState _targetState){
@@ -116,18 +120,73 @@ public class GameManager : MonoBehaviour {
 		}
 	}
 
+	/*
+	 * This coroutine is running while a round is played
+	 */
+	private IEnumerator GameLoop(GameState _mode){
+		// TODO: set flag for "round started"
+		// TODO: start (internal) clock for round time
+
+		// TODO: communicate game mode to player clients
+
+
+		if (_mode == GameState.playing_word){
+
+			// TODO: if in WORD mode, assign player clients to teams (if needed)
+			
+		}
+
+		// Display logo on player clients (logic will happen on smartphone)
+
+
+		// TODO: Assign color to player clients; team color in word mode or random color in free mode
+
+		if (_mode == GameState.playing_word){
+
+			// TODO: if in WORD mode, send letter templates to player clients
+
+			// TODO: LOOP; wait for every player to send their drawing
+			// TODO: players that are done will receive a "waiting for player(s)..." promt
+
+			// TODO: inner LOOP; wait for team members
+			// TODO: check results (correct order? accuracy?)
+
+			// TODO: display the drawings on screen
+			// TODO: first come first serve; fastest team or best accuracy? both at the same time?
+		}
+
+		// TODO: remove flag for "round started"
+
+		yield return new WaitForEndOfFrame();
+	}
+
+
+	/*
+	 * 
+	 */
 	private void OnPlayerJoin(){
 		// if there is at least one player and no round is being played start one
 		if (PlayerManager.s_playerManager.GetNumberOfPlayers() > 0 &&
 			PlayerManager.s_playerManager.GetNumberOfPlayersInCurrentRound() <= 0 &&
 			m_currentState == GameState.playing_word){
+
+			// TODO: (re)move this
 			StartNewRound();
 		}
-		// TODO: send wait message
+
+		// TODO: send wait message if in word mode
+
+		// TODO: free mode loop ???
 	}
 
+	/*
+	 * 
+	 */
 	private void OnPlayerLeave(){
 		if (m_currentState == GameState.playing_word){
+			// TODO: Check which letter the player was supposed to draw
+			// TODO: communicate to other players
+
 			// Spawn words that are already in queue
 			PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound(PlayerManager.s_playerManager.GetNumberOfPlayersInCurrentRound() - 1);
 
@@ -138,7 +197,7 @@ public class GameManager : MonoBehaviour {
 
 			if (PlayerManager.s_playerManager.GetNumberOfPlayers() < 2){
 				// not enough players for word mode
-				m_currentState = GameState.playing_free;
+				ChangeGameState(GameState.playing_free);
 			}
 		}
 	}
@@ -233,7 +292,7 @@ public class GameManager : MonoBehaviour {
 
 	public void TriggerArtstyleChange(float _time){
 		if (m_artstyleDefaultMode){
-			m_timeUntilReset += _time;
+			m_timeUntilReset += _time/(1.0f + m_timeUntilReset);
 
 			if (!m_artstyleCooldownRunning){
 				StartCoroutine(ArtstyleChangeRoutine());
@@ -253,6 +312,9 @@ public class GameManager : MonoBehaviour {
 		}
 			
 		ArtstyleManager.s_artstyleManager.SetArtstyle(ArtstyleManager.Style.arcade);
+
+		m_timeUntilReset = 0;
+		m_currentArtstyleTimer = 0;
 
 		m_artstyleCooldownRunning = false;
 	}

@@ -1,14 +1,48 @@
 ﻿<Properties StartupItem="Assembly-CSharp.csproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/Drone/Drone.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/GameManager/GameManager.cs">
     <Files>
       <File FileName="Assets/Scripts/Drone/Drone.cs" Line="54" Column="38" />
       <File FileName="Assets/Scripts/Drone/DroneProjectile/DroneProjectile.cs" Line="1" Column="1" />
       <File FileName="Assets/Scripts/Word/Letter/LetterPixel/LetterPixel.cs" Line="1" Column="1" />
       <File FileName="Assets/Scripts/_general/ArtstyleSwitcherGameObjects.cs" Line="1" Column="1" />
-      <File FileName="Assets/Scripts/GameManager/GameManager.cs" Line="1" Column="1" />
-      <File FileName="Assets/Scripts/_general/MeshRendererParallax.cs" Line="20" Column="5" />
+      <File FileName="Assets/Scripts/GameManager/GameManager.cs" Line="23" Column="43" />
+      <File FileName="Assets/Scripts/_general/MeshRendererParallax.cs" Line="1" Column="1" />
+      <File FileName="Assets/WebPlayerTemplates/HappyFunTimes/scripts/controller.js" Line="537" Column="6" />
+      <File FileName="Assets/HappyFunTimes/Scripts/HFTGamepad.cs" Line="185" Column="29" />
+      <File FileName="Assets/Scripts/GameManager/PlayerManager.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/GameManager/ArtstyleManager.cs" Line="1" Column="1" />
     </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State name="__root__">
+          <Node name="cgl_wt2015_cp3" expanded="True">
+            <Node name="Assembly-CSharp" expanded="True">
+              <Node name="HappyFunTimes" expanded="True">
+                <Node name="Scripts" expanded="True" />
+              </Node>
+              <Node name="Scripts" expanded="True">
+                <Node name="Drone" expanded="True" />
+                <Node name="GameManager" expanded="True">
+                  <Node name="GameManager.cs" selected="True" />
+                </Node>
+                <Node name="Word" expanded="True">
+                  <Node name="Letter" expanded="True">
+                    <Node name="LetterPixel" expanded="True" />
+                  </Node>
+                </Node>
+              </Node>
+              <Node name="WebPlayerTemplates" expanded="True" />
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+      <Pad Id="MonoDevelop.NUnit.TestPad">
+        <State name="__root__">
+          <Node name="cgl_wt2015_cp3" expanded="True" selected="True" />
+        </State>
+      </Pad>
+    </Pads>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore />
