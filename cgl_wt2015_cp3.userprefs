@@ -1,38 +1,29 @@
 ﻿<Properties StartupItem="Assembly-CSharp.csproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/GameManager/GameManager.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/WordSpawner/WordSpawner.cs">
     <Files>
-      <File FileName="Assets/Scripts/Drone/Drone.cs" Line="54" Column="38" />
-      <File FileName="Assets/Scripts/Drone/DroneProjectile/DroneProjectile.cs" Line="1" Column="1" />
-      <File FileName="Assets/Scripts/Word/Letter/LetterPixel/LetterPixel.cs" Line="1" Column="1" />
-      <File FileName="Assets/Scripts/_general/ArtstyleSwitcherGameObjects.cs" Line="1" Column="1" />
-      <File FileName="Assets/Scripts/GameManager/GameManager.cs" Line="23" Column="43" />
-      <File FileName="Assets/Scripts/_general/MeshRendererParallax.cs" Line="1" Column="1" />
-      <File FileName="Assets/WebPlayerTemplates/HappyFunTimes/scripts/controller.js" Line="537" Column="6" />
-      <File FileName="Assets/HappyFunTimes/Scripts/HFTGamepad.cs" Line="185" Column="29" />
-      <File FileName="Assets/Scripts/GameManager/PlayerManager.cs" Line="1" Column="1" />
-      <File FileName="Assets/Scripts/GameManager/ArtstyleManager.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/Player/DrawInputPlayer.cs" Line="120" Column="1" />
+      <File FileName="Assets/HappyFunTimes/Scripts/HFTGamepad.cs" Line="354" Column="27" />
+      <File FileName="Assets/Scripts/GameManager/PlayerManager.cs" Line="52" Column="40" />
+      <File FileName="Assets/Scripts/GameManager/GameManager.cs" Line="210" Column="34" />
+      <File FileName="Assets/Scripts/_general/ShuffleList.cs" Line="7" Column="47" />
+      <File FileName="Assets/Scripts/GameManager/WordManager.cs" Line="87" Column="56" />
+      <File FileName="Assets/Scripts/WordSpawner/WordSpawner.cs" Line="102" Column="28" />
+      <File FileName="Assets/Scripts/GameManager/AlphabetManager.cs" Line="124" Column="103" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State name="__root__">
           <Node name="cgl_wt2015_cp3" expanded="True">
             <Node name="Assembly-CSharp" expanded="True">
-              <Node name="HappyFunTimes" expanded="True">
-                <Node name="Scripts" expanded="True" />
-              </Node>
               <Node name="Scripts" expanded="True">
-                <Node name="Drone" expanded="True" />
-                <Node name="GameManager" expanded="True">
-                  <Node name="GameManager.cs" selected="True" />
-                </Node>
-                <Node name="Word" expanded="True">
-                  <Node name="Letter" expanded="True">
-                    <Node name="LetterPixel" expanded="True" />
-                  </Node>
+                <Node name="_general" expanded="True" />
+                <Node name="GameManager" expanded="True" />
+                <Node name="Player" expanded="True" />
+                <Node name="WordSpawner" expanded="True">
+                  <Node name="WordSpawner.cs" selected="True" />
                 </Node>
               </Node>
-              <Node name="WebPlayerTemplates" expanded="True" />
             </Node>
           </Node>
         </State>

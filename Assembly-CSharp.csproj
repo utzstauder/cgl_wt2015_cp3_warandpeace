@@ -75,6 +75,7 @@
      <Compile Include="Assets\Scripts\GameManager\GameManager.cs" />
      <Compile Include="Assets\Scripts\GameManager\PlayerManager.cs" />
      <Compile Include="Assets\Scripts\GameManager\SceneManager.cs" />
+     <Compile Include="Assets\Scripts\GameManager\ScrollingManager.cs" />
      <Compile Include="Assets\Scripts\GameManager\SkincolorManager.cs" />
      <Compile Include="Assets\Scripts\GameManager\WordManager.cs" />
      <Compile Include="Assets\Scripts\Player\DrawInputPlayer.cs" />
@@ -90,6 +91,10 @@
      <Compile Include="Assets\Scripts\_general\CSVReader.cs" />
      <Compile Include="Assets\Scripts\_general\Drawing.cs" />
      <Compile Include="Assets\Scripts\_general\MeshRendererParallax.cs" />
+     <Compile Include="Assets\Scripts\_general\PlayAnimationOnEnable.cs" />
+     <Compile Include="Assets\Scripts\_general\PlaySoundClipOnEnable.cs" />
+     <Compile Include="Assets\Scripts\_general\ScrollWithBackground.cs" />
+     <Compile Include="Assets\Scripts\_general\ShuffleList.cs" />
      <Compile Include="Assets\Scripts\_general\Wiggle.cs" />
      <None Include="Assets\Standard Assets\Effects\GlassRefraction\Shaders\GlassStainedBumpDistort.shader" />
      <None Include="Assets\Standard Assets\Effects\ImageEffects\Shaders\_BloomAndFlares\BlendOneOne.shader" />

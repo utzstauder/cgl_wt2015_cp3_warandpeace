@@ -29,7 +29,6 @@ public class PlayerManager : MonoBehaviour {
 		}
 
 		m_players = new List<DrawInputPlayer>();
-
 	}
 	
 	// Update is called once per frame
@@ -39,12 +38,19 @@ public class PlayerManager : MonoBehaviour {
 
 	// This is called by every DrawInputPlayer class upon connecting to the game
 	public void AddPlayer(DrawInputPlayer _player){
-		m_players.Add(_player);
+		/*DrawInputPlayer playerInList = GetPlayerReference(_player.GetSessionId());
+
+		if (playerInList != null){
+			playerInList = _player;
+		} else */m_players.Add(_player);
+
 		UpdateNumberOfPlayers();
 	}
 
 	// This is called by every DrawInputPlayer upon disconnecting from the
 	public void RemovePlayer(DrawInputPlayer _player){
+		if (_player.IsPlayingInCurrentRound()) m_nPlayersCurrentRound--;
+
 		m_players.RemoveAt(m_players.IndexOf(_player));
 
 		UpdateNumberOfPlayers();
@@ -55,6 +61,58 @@ public class PlayerManager : MonoBehaviour {
 	//
 	public int GetPlayerIndex(DrawInputPlayer _player){
 		return m_players.IndexOf(_player);
+	}
+
+	/*
+	 * Divides all players up into x teams
+	 * depending on the number of currently connected players
+	 */
+	public void AssignPlayersToTeams(){
+		int numberOfTeams = ((m_nPlayersCurrentRound - 1) / 8) + 1;
+		int teamCounter = 0%numberOfTeams + 1;
+
+		List<DrawInputPlayer> shuffledPlayerList = m_players;
+		shuffledPlayerList.Shuffle();
+
+		foreach (DrawInputPlayer player in shuffledPlayerList){
+			player.SetTeamId(teamCounter);
+			teamCounter = teamCounter%numberOfTeams + 1;
+		}
+	}
+
+	/*
+	 * Returns a list of DrawInputPlayer references of team _teamId
+	 */
+	public List<DrawInputPlayer> GetPlayersOfTeam(int _teamId){
+		List<DrawInputPlayer> playersInTeam = new List<DrawInputPlayer>();
+
+		foreach (DrawInputPlayer player in m_players){
+			if (player.GetTeamId() == _teamId){
+				playersInTeam.Add(player);
+			}
+		}
+
+		return playersInTeam;
+	}
+
+	/*
+	 * Assigns all players to team 0; free mode
+	 */
+	public void RemoveTeamReferences(){
+		foreach (DrawInputPlayer player in m_players){
+			player.SetTeamId(0);
+		}
+	}
+
+	public Color GetTeamColor(int _teamId){
+		switch (_teamId){
+			case 1: return Color.red;
+			case 2: return Color.blue;
+			case 3: return Color.yellow;
+			default: break;
+		}
+
+		return Color.white;
 	}
 
 	//
@@ -92,13 +150,41 @@ public class PlayerManager : MonoBehaviour {
 	public int GetNumberOfPlayers(){
 		return m_nPlayers;
 	}
-
+		
 	public int GetNumberOfPlayersInCurrentRound(){
 		return m_nPlayersCurrentRound;
 	}
 
-	public void SetNumberOfPlayersInCurrentRound(int _nPlayers){
+	/*public void SetNumberOfPlayersInCurrentRound(int _nPlayers){
 		m_nPlayersCurrentRound = _nPlayers;
+	}*/
+
+	/*
+	 * Sets the number of players in the current round and the corresponding flags
+	 * in the DrawInputPlayer references
+	 */
+	public void SetNumberOfPlayersInCurrentRound(){
+		m_nPlayersCurrentRound = m_nPlayers;
+
+		foreach (DrawInputPlayer player in m_players){
+			player.SetPlayingInCurrentRound(true);
+		}
+	}
+
+
+	/*
+	 * Returns a list of DrawInputPlayer references that are playing in the current round
+	 */
+	public List<DrawInputPlayer> GetPlayersInCurrentRound(){
+		List<DrawInputPlayer> listOfPlayersInCurrentRound = new List<DrawInputPlayer>();
+
+		foreach (DrawInputPlayer player in m_players){
+			if (player.IsPlayingInCurrentRound()){
+				listOfPlayersInCurrentRound.Add(player);
+			}
+		}
+
+		return listOfPlayersInCurrentRound;
 	}
 
 }

@@ -3,7 +3,7 @@ using System.Collections;
 
 public class Word : MonoBehaviour {
 
-	public Vector3 m_speed = new Vector3(-10.0f, 0, 0);
+	//public Vector3 m_speed = new Vector3(-10.0f, 0, 0);
 
 	public float m_wordSpacing = 20.0f;
 
@@ -20,9 +20,9 @@ public class Word : MonoBehaviour {
 	void Update () {
 		//m_targetPosition = transform.position + m_speed;
 		//transform.position = Vector3.Lerp(transform.position, m_targetPosition, m_speed.magnitude * Time.deltaTime);
-		if (GameManager.s_gameManager.IsPlaying()){
+		/*if (GameManager.s_gameManager.IsPlaying()){
 			transform.position += m_speed * Time.deltaTime;
-		}
+		}*/
 
 		//if (transform.position.x <= m_wordSpawner.GetDeathX()) Destroy(this.gameObject);
 	}

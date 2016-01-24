@@ -110,6 +110,20 @@ public class AlphabetManager : MonoBehaviour {
 		return array;
 	}
 
+	public static Drawing LetterToDrawing(int _letterIndex, int _divisionFactor){
+		int[] letterArray = LetterToArray(_letterIndex);
+
+		int[] scaledLetterArray = new int[width * height / _divisionFactor];
+
+		for (int y = 0; y < height; y++){
+			for (int x = 0; x < width; x++){
+				scaledLetterArray[width*y+x] = letterArray[width*(y*_divisionFactor) + (x*_divisionFactor)];
+			}
+		}
+
+		return new Drawing(scaledLetterArray, width / _divisionFactor, height / _divisionFactor, 0, "", 1.0f);
+	}
+
 	public static int CharToInt(char _char){
 		int returnInt = -1;
 

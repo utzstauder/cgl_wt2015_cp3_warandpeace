@@ -50,6 +50,8 @@ public class GameManager : MonoBehaviour {
 
 		PlayerManager.OnPlayerJoin += OnPlayerJoin;
 		PlayerManager.OnPlayerLeave += OnPlayerLeave;
+
+		InvokeRepeating("Screensaver", 0, 15.0f);
 	}
 
 	void OnDestroy(){
@@ -160,18 +162,25 @@ public class GameManager : MonoBehaviour {
 		yield return new WaitForEndOfFrame();
 	}
 
+	private void Screensaver(){
+		Debug.Log("screensaver is running...");
+	}
 
 	/*
 	 * 
 	 */
 	private void OnPlayerJoin(){
-		// if there is at least one player and no round is being played start one
-		if (PlayerManager.s_playerManager.GetNumberOfPlayers() > 0 &&
-			PlayerManager.s_playerManager.GetNumberOfPlayersInCurrentRound() <= 0 &&
+		
+		if (PlayerManager.s_playerManager.GetNumberOfPlayers() > 0){
+			CancelInvoke();
+
+			// if there is at least one player and no round is being played start one
+			if (PlayerManager.s_playerManager.GetNumberOfPlayersInCurrentRound() <= 0 &&
 			m_currentState == GameState.playing_word){
 
-			// TODO: (re)move this
-			StartNewRound();
+				// TODO: (re)move this
+				StartNewRound();
+			}
 		}
 
 		// TODO: send wait message if in word mode
@@ -187,24 +196,25 @@ public class GameManager : MonoBehaviour {
 			// TODO: Check which letter the player was supposed to draw
 			// TODO: communicate to other players
 
-			// Spawn words that are already in queue
-			PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound(PlayerManager.s_playerManager.GetNumberOfPlayersInCurrentRound() - 1);
-
-			// Check if queue full
+			// Check if queue is now full
 			if (m_wordSpawner.IsQueueFull()){
 				m_wordSpawner.SpawnLettersFromQueue();
 			}
-
+				
 			if (PlayerManager.s_playerManager.GetNumberOfPlayers() < 2){
 				// not enough players for word mode
 				ChangeGameState(GameState.playing_free);
+			}
+
+			if (PlayerManager.s_playerManager.GetNumberOfPlayers() <= 0){
+				InvokeRepeating("Screensaver", 0, 15.0f);
 			}
 		}
 	}
 
 	// This is called once a word was successfully generated
 	public void OnWordSpawned(){
-		PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound(0);
+		PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound();
 		StartNewRound();
 	}
 
@@ -236,7 +246,7 @@ public class GameManager : MonoBehaviour {
 	 */
 	public void SendRandomLetters(){
 		int currentNumberOfPlayers = PlayerManager.s_playerManager.GetNumberOfPlayers();
-		PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound(currentNumberOfPlayers);
+		PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound();
 
 		int[] randomLetters = WordManager.s_wordManager.GetRandomLetters(currentNumberOfPlayers);
 
@@ -252,7 +262,7 @@ public class GameManager : MonoBehaviour {
 	public void SendRandomWord(){
 		int currentNumberOfPlayers = PlayerManager.s_playerManager.GetNumberOfPlayers();
 
-		PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound(currentNumberOfPlayers);
+		PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound();
 
 		string word = WordManager.s_wordManager.GetRandomWord(currentNumberOfPlayers);
 		Debug.Log(word);
@@ -345,7 +355,7 @@ public class GameManager : MonoBehaviour {
 					SendRandomLetters();
 				}
 			}*/
-			if (IsPlaying()){
+			if (IsPlaying() && m_debug){
 				if (GUI.Button(new Rect(10, 30, 120, 20), "ARCADE MODE")){
 					m_artstyleDefaultMode = false;
 					ArtstyleManager.s_artstyleManager.SetArtstyle(ArtstyleManager.Style.arcade);

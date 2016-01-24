@@ -16,6 +16,8 @@ public class LetterPixel : MonoBehaviour {
 	public SpriteRenderer m_spriteRendererRealisticFaceless;
 	public SpriteRenderer m_spriteRendererRealisticFacemore;
 
+	public GameObject m_corpsePrefab;
+
 	private Letter parent;
 
 	// Use this for initialization
@@ -49,6 +51,7 @@ public class LetterPixel : MonoBehaviour {
 	private void CheckHP(){
 		if (currentHp <= 0){
 			GameManager.s_gameManager.AddScore(m_points);
+			Instantiate(m_corpsePrefab, transform.position, Quaternion.Euler(0, 0, Random.Range(0.0f, 360.0f)));
 			Destroy(this.gameObject);
 		}
 	}

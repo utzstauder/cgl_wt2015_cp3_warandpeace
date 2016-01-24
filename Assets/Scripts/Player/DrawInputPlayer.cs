@@ -23,6 +23,9 @@ public class DrawInputPlayer : MonoBehaviour {
 	private Color m_color;
 	private string m_name;
 
+	private int m_teamId = 0;						// 0 = no team; free mode
+	private bool m_playingInCurrentRound = false;
+
 	public Letter letterPrefab;
 	public LetterPixel letterPixelPrefab;
 	//public float letterPixelScale = 7.0f;
@@ -34,10 +37,11 @@ public class DrawInputPlayer : MonoBehaviour {
 
 		listOfDrawings = new List<int[]>();
 		listOfAccuracies = new List<float>();
+
+		m_gamepad  = GetComponent<HFTGamepad>();
 	}
 
 	void Start () {
-		m_gamepad  = GetComponent<HFTGamepad>();
 		m_color = m_gamepad.Color;
 
 		m_gamepad.OnReceiveDrawing += OnDrawingReceived;
@@ -53,14 +57,13 @@ public class DrawInputPlayer : MonoBehaviour {
 
 		m_gamepad.OnReceiveDrawing -= OnDrawingReceived;
 		m_gamepad.OnNameChange -= ChangeName;
+
+		Debug.Log(m_name + " disconnected!");
 	}
 
 	// Update is called once per frame
 	void Update () {
-		if (Input.GetKeyDown(KeyCode.Space)){
-			//DrawTextureOnCube();
-			//SpawnPixelsFromArray(2);
-		}
+		
 	}
 
 	public void SetGameState(string _gameState){
@@ -75,6 +78,22 @@ public class DrawInputPlayer : MonoBehaviour {
 	private void ChangeName(object sender, EventArgs e)
 	{
 		SetName(m_gamepad.Name);
+	}
+
+	public int GetTeamId(){
+		return m_teamId;
+	}
+
+	public void SetTeamId(int _teamId){
+		m_teamId = _teamId;
+	}
+
+	public bool IsPlayingInCurrentRound(){
+		return m_playingInCurrentRound;
+	}
+
+	public void SetPlayingInCurrentRound(bool _value){
+		m_playingInCurrentRound = _value;
 	}
 
 	public int GetNumberOfDrawings(){

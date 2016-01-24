@@ -94,6 +94,14 @@ public class WordSpawner : MonoBehaviour {
 		GameManager.s_gameManager.OnWordSpawned();
 	}
 
+	/*
+	 * use this for showcasing
+	 */
+	public void SpawnWordFromString(string _word){
+		int[] letterIds = WordManager.s_wordManager.GetWordAsIntArrayFromString(_word);
+		// TODO: continue here...
+	}
+
 	// TODO: deprecated
 	// Spawn a complete word
 	public void SpawnWord(int[] _playerIds){
