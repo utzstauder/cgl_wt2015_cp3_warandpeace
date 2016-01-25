@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour {
 
@@ -14,6 +15,10 @@ public class GameManager : MonoBehaviour {
 	private GameState m_previousState;
 	private int m_score = 0;
 
+	// Screensaver
+	public string[] m_screensaverWords = {"Drawnes"};
+	public float m_timeInBetweenWords = 20.0f;
+	private int m_screensaverWordIndex = 0;
 
 	// References
 	public static GameManager s_gameManager;
@@ -32,6 +37,7 @@ public class GameManager : MonoBehaviour {
 
 	// Game loop variables
 	private bool m_roundStarted = false;
+	private float m_roundTimer = 0;
 
 	// Use this for initialization
 	void Awake () {
@@ -50,8 +56,6 @@ public class GameManager : MonoBehaviour {
 
 		PlayerManager.OnPlayerJoin += OnPlayerJoin;
 		PlayerManager.OnPlayerLeave += OnPlayerLeave;
-
-		InvokeRepeating("Screensaver", 0, 15.0f);
 	}
 
 	void OnDestroy(){
@@ -78,11 +82,23 @@ public class GameManager : MonoBehaviour {
 		//Debug.Log(m_timeUntilReset - m_currentArtstyleTimer);
 	}
 
+	void StartGame(){
+		if (PlayerManager.s_playerManager.GetNumberOfPlayers() >= PlayerManager.s_playerManager.m_minPlayersPerTeam){
+			ChangeGameState(GameState.playing_word);
+		} else ChangeGameState(GameState.playing_free);
+
+		InvokeRepeating("Screensaver", 0, m_timeInBetweenWords);
+
+		PlayerManager.s_playerManager.BroadcastNotification("This is a very long paragraph to test the awesome text wrapper code!");
+
+		StartCoroutine(GameLoop(m_currentState));
+	}
+
 	private void ChangeGameState(GameState _targetState){
 		m_previousState = m_currentState;
 		m_currentState = _targetState;
 
-		string gameStateToSend = GetGameStateAsString(m_currentState);
+		/*string gameStateToSend = GetGameStateAsString(m_currentState);
 
 		for (int i = 0; i < PlayerManager.s_playerManager.GetNumberOfPlayers(); i++){
 			PlayerManager.s_playerManager.GetPlayerReference(i).SetGameState(gameStateToSend);
@@ -93,7 +109,7 @@ public class GameManager : MonoBehaviour {
 			PlayerManager.s_playerManager.GetNumberOfPlayersInCurrentRound() <= 0 &&
 			m_currentState == GameState.playing_word){
 			StartNewRound();
-		}
+		}*/
 	}
 
 	// TODO: implement
@@ -102,11 +118,12 @@ public class GameManager : MonoBehaviour {
 	}
 
 	/*
+	 * DEPRECATED; use GameLoop coroutine instead
 	 * This function gets called whenever a previous round end or in the beginning of the game
 	 */
 	public void StartNewRound(){
 		int numberOfPlayers = PlayerManager.s_playerManager.GetNumberOfPlayers();
-		Debug.Log("numberOfPlayer :" + numberOfPlayers);
+		//Debug.Log("numberOfPlayers: " + numberOfPlayers);
 
 		if (m_currentState == GameState.playing_word){
 			if (numberOfPlayers >= 2){
@@ -126,44 +143,88 @@ public class GameManager : MonoBehaviour {
 	 * This coroutine is running while a round is played
 	 */
 	private IEnumerator GameLoop(GameState _mode){
-		// TODO: set flag for "round started"
-		// TODO: start (internal) clock for round time
+		// set flag for "round started"
+		m_roundStarted = true;
 
-		// TODO: communicate game mode to player clients
+		// reset/start (internal) clock for round time
+		m_roundTimer = 0;
 
+		// determine who is playing the current round
+		PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound();
 
-		if (_mode == GameState.playing_word){
-
-			// TODO: if in WORD mode, assign player clients to teams (if needed)
-			
-		}
-
-		// Display logo on player clients (logic will happen on smartphone)
-
-
-		// TODO: Assign color to player clients; team color in word mode or random color in free mode
+		// communicate game mode to player clients
+		PlayerManager.s_playerManager.BroadcastCurrentGameMode(m_currentState);
 
 		if (_mode == GameState.playing_word){
+			// +++ WORD MODE +++
 
-			// TODO: if in WORD mode, send letter templates to player clients
+			// if in WORD mode, assign player clients to teams (if needed)
+			PlayerManager.s_playerManager.AssignPlayersToTeams();
 
-			// TODO: LOOP; wait for every player to send their drawing
+			// notify the players
+			PlayerManager.s_playerManager.BroadcastNotificationToCurrentRound("You are playing WORD MODE! Communicate with the other players of your color and draw the letters in the correct order!");
+
+			// send letter templates to player clients / teams
+			for (int i = 1; i <= PlayerManager.s_playerManager.GetNumberOfTeams(); i++){
+				// get a list of players of team i
+				List<DrawInputPlayer> playersInCurrentTeam = PlayerManager.s_playerManager.GetPlayersOfTeam(i);
+
+				// get a random word of length = number of players in team i
+				string word = WordManager.s_wordManager.GetRandomWord(playersInCurrentTeam.Count);
+
+				// distribute the letters to the team members randomly
+				playersInCurrentTeam.Shuffle();
+
+				for (int c = 0; c < word.Length; c++){
+					playersInCurrentTeam[c].DrawLetterOnBackgroundFromString(word[c].ToString());
+				}
+			}
+
+
+			while (!m_wordSpawner.IsQueueFull()){
+				// LOOP; wait for every player to send their drawing
+
+				// TODO: inner LOOP; wait for team members
+				// TODO: check results (correct order? accuracy?)
+
+				yield return new WaitForSeconds(2.0f);
+			}
+
+			// display the drawings on screen
+			// first come first serve; fastest team or best accuracy? both at the same time
+			// right now, the fastest team gets drawn first
+			m_wordSpawner.SpawnWordsFromQueueByTeamId();
+
 			// TODO: players that are done will receive a "waiting for player(s)..." promt
+			// this will probably happen on the smartphone
 
-			// TODO: inner LOOP; wait for team members
-			// TODO: check results (correct order? accuracy?)
 
-			// TODO: display the drawings on screen
-			// TODO: first come first serve; fastest team or best accuracy? both at the same time?
+
+		} else if (_mode == GameState.playing_free){
+			// +++ FREE MODE +++
+
+			// pick random colors for all players
+			PlayerManager.s_playerManager.AssignRandomColors();
+
+			// notify the players
+			PlayerManager.s_playerManager.BroadcastNotificationToCurrentRound("You are playing FREE MODE! Draw anything you want and submit it to the game!");
+		
+			while (_mode == GameState.playing_free){
+				yield return new WaitForEndOfFrame();
+			}
 		}
 
-		// TODO: remove flag for "round started"
+		// remove flag for "round started"
+		m_roundStarted = false;
 
 		yield return new WaitForEndOfFrame();
 	}
 
 	private void Screensaver(){
-		Debug.Log("screensaver is running...");
+		if (PlayerManager.s_playerManager.GetNumberOfPlayers() <= 0){
+			Debug.Log("screensaver is running...");
+			m_wordSpawner.SpawnWordFromString(m_screensaverWords[m_screensaverWordIndex++%m_screensaverWords.Length]);
+		} else CancelInvoke();
 	}
 
 	/*
@@ -207,7 +268,7 @@ public class GameManager : MonoBehaviour {
 			}
 
 			if (PlayerManager.s_playerManager.GetNumberOfPlayers() <= 0){
-				InvokeRepeating("Screensaver", 0, 15.0f);
+				InvokeRepeating("Screensaver", 0, m_timeInBetweenWords);
 			}
 		}
 	}
@@ -222,18 +283,16 @@ public class GameManager : MonoBehaviour {
 	public void OnPlayerReceivedDrawing(DrawInputPlayer _player){
 		//Debug.Log("OnPlayerReceivedDrawing");
 		if (m_currentState == GameState.playing_word){
-			Drawing playerDrawing = _player.GetCurrentDrawing();
-			m_wordSpawner.AddLetterDrawingToQueue(playerDrawing);
+			m_wordSpawner.AddLetterDrawingToQueue(_player.GetCurrentDrawing());
 
-			// Check if queue full
+			/*// Check if queue full
 			if (m_wordSpawner.IsQueueFull()){
 				m_wordSpawner.SpawnLettersFromQueue();
-			}
+			}*/
 
 		} else if (m_currentState == GameState.playing_free) {
-			// TODO: spawn free drawings
-			Drawing playerDrawing = _player.GetCurrentDrawing();
-			m_wordSpawner.SpawnLetterFromDrawing(playerDrawing);
+			// spawn free drawings
+			m_wordSpawner.SpawnLetterFromDrawing(_player.GetCurrentDrawing());
 		}
 		
 		/*int[] playerIds = new int[1];
@@ -273,7 +332,10 @@ public class GameManager : MonoBehaviour {
 		ArrayFunctions.RandomizeArray(ref wordArray);
 
 		for (int i = 0; i < currentNumberOfPlayers; i++){
-			PlayerManager.s_playerManager.GetPlayerReference(i).DrawLetterOnBackground(wordArray[i]);
+			//PlayerManager.s_playerManager.GetPlayerReference(i).DrawLetterOnBackground(wordArray[i]);
+			PlayerManager.s_playerManager.GetPlayerReference(i).DrawLetterOnBackgroundFromString(word[i].ToString());
+			// TODO: for testing purposes
+			PlayerManager.s_playerManager.GetPlayerReference(i).PlaySound("newLetters");
 		}
 	}
 
@@ -376,13 +438,14 @@ public class GameManager : MonoBehaviour {
 			// Menu
 			GUILayout.BeginVertical();
 
-			if (GUI.Button(new Rect(Screen.width/2 - 50, Screen.height/2 - m_menuButtonSpacing * 1.5f , m_menuButtonWidth, m_menuButtonHeight), "WORD MODE")){
-				ChangeGameState(GameState.playing_word);
+			if (GUI.Button(new Rect(Screen.width/2 - 50, Screen.height/2 - m_menuButtonSpacing * 1.5f , m_menuButtonWidth, m_menuButtonHeight * 3), "START GAME")){
+				StartGame();
+				//ChangeGameState(GameState.playing_word);
 			}
 
-			if (GUI.Button(new Rect(Screen.width/2 - 50, Screen.height/2 - m_menuButtonSpacing/2, m_menuButtonWidth, m_menuButtonHeight), "FREE MODE")){
+			/*if (GUI.Button(new Rect(Screen.width/2 - 50, Screen.height/2 - m_menuButtonSpacing/2, m_menuButtonWidth, m_menuButtonHeight), "FREE MODE")){
 				ChangeGameState(GameState.playing_free);
-			}
+			}*/
 
 			if (GUI.Button(new Rect(Screen.width/2 - 50, Screen.height/2 + m_menuButtonSpacing/2, m_menuButtonWidth, m_menuButtonHeight), "OPEN QUESTIONAIRE")){
 				Application.OpenURL("https://docs.google.com/forms/d/1DUZs3-u70XKN4UzRwLdavks2_PsPnbGpu0_gVTBcvS8/viewform");
@@ -395,6 +458,8 @@ public class GameManager : MonoBehaviour {
 			GUILayout.EndVertical();
 		}
 
-		GUI.Label(new Rect(20, 10, 300, 30), "SCORE: " + m_score);
+		if (ArtstyleManager.s_artstyleManager.GetCurrentStyle() == ArtstyleManager.Style.arcade){
+			GUI.Label(new Rect(20, 10, 300, 30), 	"SCORE:      " + m_score);
+		} else GUI.Label(new Rect(20, 10, 300, 30), "CASUALTIES: " + m_score);
 	}
 }

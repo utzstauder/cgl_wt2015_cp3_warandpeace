@@ -18,6 +18,7 @@ public class DrawInputPlayer : MonoBehaviour {
 	private List<float> listOfAccuracies;
 
 	private HFTGamepad m_gamepad;
+	private HFTSoundPlayer m_soundPlayer;
 	private HFTInput m_hftInput;
 	private UnityEngine.UI.Text m_text;
 	private Color m_color;
@@ -25,6 +26,8 @@ public class DrawInputPlayer : MonoBehaviour {
 
 	private int m_teamId = 0;						// 0 = no team; free mode
 	private bool m_playingInCurrentRound = false;
+
+	private string m_currentLetter = "";
 
 	public Letter letterPrefab;
 	public LetterPixel letterPixelPrefab;
@@ -39,6 +42,7 @@ public class DrawInputPlayer : MonoBehaviour {
 		listOfAccuracies = new List<float>();
 
 		m_gamepad  = GetComponent<HFTGamepad>();
+		m_soundPlayer = GetComponent<HFTSoundPlayer>();
 	}
 
 	void Start () {
@@ -72,7 +76,7 @@ public class DrawInputPlayer : MonoBehaviour {
 
 	private void SetName(string _name){
 		m_name = _name;
-		gameObject.name = "Player_" + _name;
+		gameObject.name = "Player_" + _name + ":" + GetSessionId();
 	}
 
 	private void ChangeName(object sender, EventArgs e)
@@ -116,6 +120,17 @@ public class DrawInputPlayer : MonoBehaviour {
 		return m_color;
 	}
 
+	public void SetPlayerColor(Color _color){
+		m_gamepad.Color = _color;
+		m_color = _color;
+	}
+
+	public void SetRandomColor(){
+		m_gamepad.SetDefaultColor();
+		m_gamepad.SendColor();
+		m_color = m_gamepad.Color;
+	}
+
 	public string GetSessionId(){
 		return m_gamepad.NetPlayer.GetSessionId();
 	}
@@ -127,6 +142,7 @@ public class DrawInputPlayer : MonoBehaviour {
 							m_gamepad.drawArrayHeight,
 							m_gamepad.drawOptions.drawArrayDivision,
 							m_gamepad.NetPlayer.GetSessionId(),
+							m_teamId,
 							m_gamepad.drawAccuracy);
 	}
 
@@ -166,6 +182,10 @@ public class DrawInputPlayer : MonoBehaviour {
 		}
 
 		return returnDrawing;
+	}
+
+	public string GetCurrentLetter(){
+		return m_currentLetter;
 	}
 
 	// +++++++++++++++++++++++++++++++++++
@@ -276,6 +296,19 @@ public class DrawInputPlayer : MonoBehaviour {
 	// TODO: bad implementation / doesn't belong here / or does it?
 	public void DrawLetterOnBackground(int letter){
 		m_gamepad.SendLetter(letter);
+	}
+
+	public void DrawLetterOnBackgroundFromString(string letter){
+		m_currentLetter = letter;
+		m_gamepad.SendLetter(letter);
+	}
+
+	public void SendNotification(string _message){
+		m_gamepad.SendNotification(_message);
+	}
+
+	public void PlaySound(string filenameWithoutExtension){
+		m_soundPlayer.PlaySound(filenameWithoutExtension);
 	}
 
 	void OnGUI(){

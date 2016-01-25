@@ -23,18 +23,17 @@ public class WordSpawner : MonoBehaviour {
 
 	// the drawing queue
 	private List<Drawing> m_drawingQueue;
+	private List<int> m_teamSubmissionOrder;
 
 	void Awake(){
 		m_drawingQueue = new List<Drawing>();
+		m_teamSubmissionOrder = new List<int>();
 	}
 
 	// Use this for initialization
 	void Start () {
 		wordDestroyer = GameObject.FindGameObjectWithTag("WordDestroyer").transform;
-	}
-	
-	// Update is called once per frame
-	void Update () {
+
 		deathX = wordDestroyer.position.x;
 	}
 
@@ -42,12 +41,46 @@ public class WordSpawner : MonoBehaviour {
 		return deathX;
 	}
 
+
+	/*
+	 * Call this in word mode
+	 * Accepts only one drawing per player
+	 */
 	public void AddLetterDrawingToQueue(Drawing _drawing){
 		//Debug.Log("AddLetterDrawingToQueue");
+		bool alreadyInQueue = false;
 
-		m_drawingQueue.Add(_drawing);
+		foreach (Drawing drawing in m_drawingQueue){
+			if (drawing.playerId == _drawing.playerId){
+				alreadyInQueue = true;
+				Debug.Log("Player " + PlayerManager.s_playerManager.GetPlayerReference(_drawing.playerId).name + " alredy submitted a drawing");
+			}
+		}
+
+		if (!alreadyInQueue){
+			m_drawingQueue.Add(_drawing);
+
+			// check if all team members are done
+			if (IsTeamReady(_drawing.teamId) && !m_teamSubmissionOrder.Contains(_drawing.teamId)){
+				// add team to submission order
+				m_teamSubmissionOrder.Add(_drawing.teamId);
+			}
+		}
 
 		//Debug.Log("Queue contains " + m_drawingQueue.Count + " drawings");
+	}
+
+	/*
+	 * Call this in free mode
+	 * Accepts multiply drawings per player
+	 */
+	public void AddFreeDrawingToQueue(Drawing _drawing){
+		m_drawingQueue.Add(_drawing);
+	}
+
+	public void EmptyQueue(){
+		m_drawingQueue.Clear();
+		m_teamSubmissionOrder.Clear();
 	}
 
 	public bool IsQueueFull(){
@@ -61,6 +94,61 @@ public class WordSpawner : MonoBehaviour {
 		if (letter != null){
 			letter.transform.parent = word.transform;
 		}
+	}
+
+	public void SpawnWordsFromQueueByTeamId(){
+		StartCoroutine(SpawnWordsFromQueueByTeamIdCoroutine());
+	}
+
+	private IEnumerator SpawnWordsFromQueueByTeamIdCoroutine(){
+
+		// Count through every team that participated
+		for (int i = 0; i < m_teamSubmissionOrder.Count; i++){
+
+			Vector3 letterPosition = Vector3.zero;
+			float letterPositionX = 0;
+			Word word = Instantiate(m_wordPrefab, transform.position, Quaternion.identity) as Word;
+			word.SetWordSpawnerReference(this);
+
+			// check every drawing in the queue for its team id and spawn the letter
+			for(int d = 0; d < m_drawingQueue.Count; d++){
+				if (m_drawingQueue[d].teamId == m_teamSubmissionOrder[i]){
+				
+					Letter letter = SpawnLetter(m_drawingQueue[d], transform.position);
+					letterPositionX = transform.position.x + (d * word.m_wordSpacing);
+					letterPosition = new Vector3(letterPositionX, transform.position.y, 0);
+					letter.transform.position = letterPosition;
+
+					if (letter != null){
+						letter.transform.parent = word.transform;
+					}
+
+					yield return new WaitForSeconds(.33f);
+				}
+			}
+
+			// wait until spawning the next word
+			yield return new WaitForSeconds(2.0f);
+		}
+
+		// empty queue(s) when done
+		EmptyQueue();
+	}
+
+	/*
+	 * Returns TRUE if every team member submitted a drawing
+	 */
+	public bool IsTeamReady(int _teamId){
+		int submittedDrawings = 0;
+		List<DrawInputPlayer> playersInTeam = PlayerManager.s_playerManager.GetPlayersOfTeam(_teamId);
+
+		foreach(Drawing drawing in m_drawingQueue){
+			if (drawing.teamId == _teamId) submittedDrawings++;
+		}
+
+		if (submittedDrawings >= playersInTeam.Count) return true;
+
+		return false;
 	}
 
 	public void SpawnLettersFromQueue(){
@@ -88,18 +176,39 @@ public class WordSpawner : MonoBehaviour {
 		}
 		// Empty Queue
 
-		m_drawingQueue = new List<Drawing>();
+		m_drawingQueue.Clear();
 
 		// Tell game GameManager that the word has been spawned
 		GameManager.s_gameManager.OnWordSpawned();
 	}
 
 	/*
-	 * use this for showcasing
+	 * use this for showcasing / screensaver
 	 */
 	public void SpawnWordFromString(string _word){
-		int[] letterIds = WordManager.s_wordManager.GetWordAsIntArrayFromString(_word);
-		// TODO: continue here...
+		StartCoroutine(SpawnWordFromStringCoroutine(_word));
+	}
+
+	private IEnumerator SpawnWordFromStringCoroutine(string _word){
+		// convert to lower case
+		_word = _word.ToLower();
+
+		Vector3 letterPosition = Vector3.zero;
+		float letterPositionX = 0;
+		Word word = Instantiate(m_wordPrefab, transform.position, Quaternion.identity) as Word;
+		word.SetWordSpawnerReference(this);
+
+		for (int i = 0; i < _word.Length; i++){
+			Letter letter = SpawnLetterFromChar(_word[i]);
+			letterPositionX = transform.position.x /*- (numberOfLetters * word.m_wordSpacing)/2.0f */ + (i * word.m_wordSpacing);
+			letterPosition = new Vector3(letterPositionX, transform.position.y, 0);
+			letter.transform.position = letterPosition;
+			if (letter != null){
+				letter.transform.parent = word.transform;
+			}
+
+			yield return new WaitForEndOfFrame();
+		}
 	}
 
 	// TODO: deprecated
@@ -116,7 +225,7 @@ public class WordSpawner : MonoBehaviour {
 			word.SetWordSpawnerReference(this);
 
 			for (int i = 0; i < numberOfLetters; i++){
-				letterPositionX = transform.position.x - (numberOfLetters * word.m_wordSpacing)/2.0f + (i * word.m_wordSpacing);
+				letterPositionX = transform.position.x /*- (numberOfLetters * word.m_wordSpacing)/2.0f */ + (i * word.m_wordSpacing);
 				letterPosition = new Vector3(letterPositionX, transform.position.y, 0);
 				Letter letter = SpawnLetter(_playerIds[i], letterPosition);
 				if (letter != null){
@@ -126,6 +235,34 @@ public class WordSpawner : MonoBehaviour {
 
 			word.transform.localScale *= Random.Range(m_wordScaleRange.x, m_wordScaleRange.y);
 		}
+	}
+
+	private Letter SpawnLetterFromChar(char _letter){
+		Drawing currentLetterDrawing = AlphabetManager.LetterToDrawing(AlphabetManager.CharToInt(_letter), m_arrayDivisionFactor/2);
+
+		if (currentLetterDrawing != null){
+
+			Letter letter = Instantiate(m_letterPrefab, transform.position, Quaternion.identity) as Letter;
+			Vector3 position;
+			// TODO: set color?
+			Color color = Random.ColorHSV();
+			float letterScale = 1.0f;
+		
+			for (int y = 0; y < currentLetterDrawing.height; y += 2*m_arrayDivisionFactor){
+				for (int x = 0; x < currentLetterDrawing.width; x += 2*m_arrayDivisionFactor){
+					if (currentLetterDrawing.drawing[currentLetterDrawing.width*y + x] > 0){
+						position = transform.position + new Vector3((x * currentLetterDrawing.gap) - (currentLetterDrawing.width / 2 * currentLetterDrawing.gap), (currentLetterDrawing.height / 2 * currentLetterDrawing.gap) - (y * currentLetterDrawing.gap), 0) * letterScale;
+						LetterPixel pixel = spawnLetterPixel(position, letterScale * m_arrayDivisionFactor, color, currentLetterDrawing.accuracy);
+						pixel.transform.SetParent(letter.transform);
+					}
+				}
+			}
+
+			return letter;
+		}
+
+		return null;
+		//return SpawnLetter(currentLetterDrawing, Vector3.zero);
 	}
 
 	private Letter SpawnLetter(Drawing _drawing, Vector3 _position){

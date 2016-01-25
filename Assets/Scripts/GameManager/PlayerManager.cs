@@ -11,6 +11,10 @@ public class PlayerManager : MonoBehaviour {
 
 	public static PlayerManager s_playerManager;	// Static reference to this instance
 
+	public int m_minPlayersPerTeam = 3;
+	[Range(3, 8)]
+	public int m_maxPlayersPerTeam = 4; 
+
 	private List<DrawInputPlayer> m_players;		// A generic list of all the players that are currently connected to the game
 	private int m_nPlayers = 0;						// The number of players currently connected to the game
 	private int m_nPlayersCurrentRound = 0;
@@ -18,6 +22,8 @@ public class PlayerManager : MonoBehaviour {
 	public delegate void PlayerCountChange();		// Broadcasts a message when the number of players changes; mainly for fallback purposes	
 	public static event PlayerCountChange OnPlayerJoin;
 	public static event PlayerCountChange OnPlayerLeave;
+
+	private int m_numberOfTeams = 0;
 
 	// Use this for initialization
 	void Awake () {
@@ -62,13 +68,44 @@ public class PlayerManager : MonoBehaviour {
 	public int GetPlayerIndex(DrawInputPlayer _player){
 		return m_players.IndexOf(_player);
 	}
+		
+	/*
+	 * Tells every participating player which game mode is currently beeing played
+	 */
+	public void BroadcastCurrentGameMode(GameManager.GameState _currentGameMode){
+		List<DrawInputPlayer> playersInCurrentRound = GetPlayersInCurrentRound();
+
+		foreach (DrawInputPlayer player in playersInCurrentRound){
+			player.SetGameState(GameManager.s_gameManager.GetGameStateAsString(_currentGameMode));
+		}
+	}
+
+	/*
+	 * Broadcasts a notification to every participating player
+	 */
+	public void BroadcastNotificationToCurrentRound(string _message){
+		List<DrawInputPlayer> playersInCurrentRound = GetPlayersInCurrentRound();
+
+		foreach (DrawInputPlayer player in playersInCurrentRound){
+			player.SendNotification(_message);
+		}
+	}
+
+	/*
+	 * Broadcasts a notification to every player
+	 */
+	public void BroadcastNotification(string _message){
+		foreach (DrawInputPlayer player in m_players){
+			player.SendNotification(_message);
+		}
+	}
 
 	/*
 	 * Divides all players up into x teams
 	 * depending on the number of currently connected players
 	 */
 	public void AssignPlayersToTeams(){
-		int numberOfTeams = ((m_nPlayersCurrentRound - 1) / 8) + 1;
+		int numberOfTeams = ((m_nPlayersCurrentRound - 1) / m_maxPlayersPerTeam) + 1;
 		int teamCounter = 0%numberOfTeams + 1;
 
 		List<DrawInputPlayer> shuffledPlayerList = m_players;
@@ -76,7 +113,30 @@ public class PlayerManager : MonoBehaviour {
 
 		foreach (DrawInputPlayer player in shuffledPlayerList){
 			player.SetTeamId(teamCounter);
+			player.SetPlayerColor(GetTeamColor(teamCounter));
 			teamCounter = teamCounter%numberOfTeams + 1;
+		}
+
+		m_numberOfTeams = numberOfTeams;
+
+		// check if there are enough players in each team
+		for (int i = 1; i <= numberOfTeams; i++){
+			List<DrawInputPlayer> playersInTeam = GetPlayersOfTeam(i);
+			if (playersInTeam.Count < m_minPlayersPerTeam){
+				m_maxPlayersPerTeam++;
+				AssignPlayersToTeams();
+				i = numberOfTeams+1;
+			}
+		}
+	}
+
+	public int GetNumberOfTeams(){
+		return m_numberOfTeams;
+	}
+
+	public void AssignRandomColors(){
+		foreach (DrawInputPlayer player in m_players){
+			player.SetRandomColor();
 		}
 	}
 

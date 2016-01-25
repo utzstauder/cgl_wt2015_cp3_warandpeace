@@ -35,6 +35,8 @@ public class LetterPixel : MonoBehaviour {
 		if (m_spriteRendererArcade) m_spriteRendererArcade.color = Color.Lerp(Color.black, _color, _accuracy);
 		if (m_spriteRendererRealisticFaceless) m_spriteRendererRealisticFaceless.color = Color.Lerp(Color.black, _color, _accuracy);
 		if (m_spriteRendererRealisticFacemore) m_spriteRendererRealisticFacemore.color = SkincolorManager.s_skincolorManager.GetRandomSkincolor();
+
+		GetComponent<AnimationOffset>().SetAnimationOffset();
 	}
 
 	public void SetParent(Letter _parent){
@@ -51,7 +53,7 @@ public class LetterPixel : MonoBehaviour {
 	private void CheckHP(){
 		if (currentHp <= 0){
 			GameManager.s_gameManager.AddScore(m_points);
-			Instantiate(m_corpsePrefab, transform.position, Quaternion.Euler(0, 0, Random.Range(0.0f, 360.0f)));
+			Destroy(Instantiate(m_corpsePrefab, transform.position, Quaternion.Euler(0, 0, Random.Range(0.0f, 360.0f))), 20.0f);
 			Destroy(this.gameObject);
 		}
 	}

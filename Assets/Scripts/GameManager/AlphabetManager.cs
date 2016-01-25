@@ -110,18 +110,35 @@ public class AlphabetManager : MonoBehaviour {
 		return array;
 	}
 
-	public static Drawing LetterToDrawing(int _letterIndex, int _divisionFactor){
-		int[] letterArray = LetterToArray(_letterIndex);
-
-		int[] scaledLetterArray = new int[width * height / _divisionFactor];
+	// Creates an array of the alpha values of the sprite and flips it upside down
+	public static int[] LetterToArrayFlipped(int letterIndex){
+		int[] array = new int[width * height];
+		Texture2D letter = g_letters[letterIndex];
 
 		for (int y = 0; y < height; y++){
 			for (int x = 0; x < width; x++){
-				scaledLetterArray[width*y+x] = letterArray[width*(y*_divisionFactor) + (x*_divisionFactor)];
+				array[y * width + x] = to255(letter.GetPixel(x, (height-y)).a);
 			}
 		}
 
-		return new Drawing(scaledLetterArray, width / _divisionFactor, height / _divisionFactor, 0, "", 1.0f);
+		return array;
+	}
+
+	public static Drawing LetterToDrawing(int _letterIndex, int _divisionFactor){
+		//Debug.Log(_divisionFactor);
+
+		int[] letterArray = LetterToArrayFlipped(_letterIndex);
+
+		int[] scaledLetterArray = new int[(width / _divisionFactor) * (height / _divisionFactor)];
+
+		for (int y = 0; y < height/_divisionFactor; y++){
+			for (int x = 0; x < width/_divisionFactor; x++){
+				scaledLetterArray[(width/_divisionFactor) * y + x] =
+					letterArray[width * (y*_divisionFactor) + (x*_divisionFactor)];
+			}
+		}
+
+		return new Drawing(scaledLetterArray, width / _divisionFactor, height / _divisionFactor, _divisionFactor * 2, "", 0, 1.0f);
 	}
 
 	public static int CharToInt(char _char){

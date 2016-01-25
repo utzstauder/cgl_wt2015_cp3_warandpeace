@@ -244,7 +244,8 @@ requirejs([
   client.addEventListener('backgroundOptions', handleBackgroundOptions);
   client.addEventListener('receiveLetter', handleReceiveLetter);
   client.addEventListener('pullDrawing', handlePullDrawing);
-  //TODO: client.addEventListener('notification', handleReceiveNotification);
+  client.addEventListener('receiveLetterAsString', handleReceiveLetterAsString);
+  client.addEventListener('receiveNotification', handleReceiveNotification);
 
   // This way of making buttons probably looks complicated but
   // it lets us easily make more buttons.
@@ -573,6 +574,7 @@ requirejs([
 	var currentLetter = null;
 	var currentLetterWidth = null;
 	var currentLetterHeight = null;
+	var currentLetterAsString = null;
 
 	// notification variables
 	var drawingEnabled = true;
@@ -628,7 +630,7 @@ requirejs([
 		// Add the event listener
 		window.addEventListener('devicemotion', deviceMotionHandler);
 	} else {
-		alert("devicemotion not supported!");
+		//alert("devicemotion not supported!");
 	}
 	
 	// Check for vibration support
@@ -665,6 +667,9 @@ requirejs([
 		ctx.strokeStyle = strokeStyleTmp;
 		bgCtx.fillStyle = bgFillStyleTmp;
 
+		buttonClear = button("clear", 0, (uiCanvas.height - uiCanvas.height/10), (uiCanvas.width / 2), uiCanvas.height/10);
+		buttonSend = button("send", (uiCanvas.width / 2), (uiCanvas.height - uiCanvas.height/10), (uiCanvas.width / 2), uiCanvas.height/10);
+
 		redrawAll();
 	}
 
@@ -673,6 +678,13 @@ requirejs([
 
 	function handlePullDrawing(data){
 		sendDrawArray();
+	}
+	
+	function handleReceiveLetterAsString(data){
+		// TODO: 
+		currentLetterAsString = data.letter;
+		if (gameState === "playing_word");
+		drawLetterOnBgCanvasFromString(currentLetterAsString);
 	}
 	
 	function handleReceiveLetter(data){
@@ -747,14 +759,14 @@ requirejs([
 	// notifications are prompts that disappear once they are clicked
 	// "new round has stared! you are on team read! have fun!" *click* notification disappears 
 	// TODO: implement server end
-	/*function handleReceiveNotification(data){
+	function handleReceiveNotification(data){
 		notificationShowing = true;
 		drawingEnabled = false;
 
-		// TODO: implement data handling
+		notificationText = data.message;
 
-		drawNotification():
-	}*/
+		drawNotification();
+	}
 
 	// communication handler
 	// END
@@ -983,9 +995,15 @@ requirejs([
 
 	// redraws everything that should be visible
 	function redrawAll(){
-
-		if (currentLetter !== null && gameState == "playing_word"){
+		clearCanvas(ctx);
+		clearCanvas(bgCtx);
+		clearCanvas(uiCtx);
+		/*if (currentLetter !== null && gameState == "playing_word"){
 			drawLetterOnBgCanvas();
+		}*/
+		
+		if (currentLetterAsString !== null && gameState == "playing_word"){
+			drawLetterOnBgCanvasFromString(currentLetterAsString);
 		}
 
 		// TODO: draw UI
@@ -1003,6 +1021,7 @@ requirejs([
 	// should be called everytime something is drawn on ANY canvas and should be drawn last
 	// TODO: deprecated
 	function drawUI(){
+
 		if (notificationShowing){
 			drawNotification();
 		} else {
@@ -1025,7 +1044,8 @@ requirejs([
 
 	// is called when buttonSend is pressed
 	function buttonSendPressed(){
-		if (currentLetter !== null && gameState === "playing_word"){
+		if (gameState === "playing_word" &&
+		(currentLetter !== null || currentLetterAsString !== null)){
 			
 			var accuracy = compareCanvas(bgCtx, ctx);
 
@@ -1049,18 +1069,42 @@ requirejs([
 	}
 
 	function drawNotification(){
+		// fill background
 		uiCtx.fillStyle = "white";
 		uiCtx.fillRect(0, 0, uiCtx.canvas.width, uiCtx.canvas.height);
 
 		uiCtx.fillStyle = "black";
-		uiCtx.font = "50px arial";
+		uiCtx.font = "30px arial";
 		uiCtx.fontBaseline = "middle";
 		uiCtx.textAlign = "center";
-		uiCtx.fillText(notificationText, uiCtx.canvas.width/2, uiCtx.canvas.height/2);
+		
+		//uiCtx.fillText(notificationText, uiCtx.canvas.width/2, uiCtx.canvas.height/2);
+		wrapText(uiCtx, notificationText, uiCtx.canvas.width/2, uiCtx.canvas.height*1/3, uiCtx.canvas.width*2/3, 30);
 	}
+	
+	// found this at: http://www.html5canvastutorials.com/tutorials/html5-canvas-wrap-text-tutorial/
+	function wrapText(context, text, x, y, maxWidth, lineHeight) {
+        var words = text.split(' ');
+        var line = '';
+
+        for(var n = 0; n < words.length; n++) {
+          var testLine = line + words[n] + ' ';
+          var metrics = context.measureText(testLine);
+          var testWidth = metrics.width;
+          if (testWidth > maxWidth && n > 0) {
+            context.fillText(line, x, y);
+            line = words[n] + ' ';
+            y += lineHeight;
+          }
+          else {
+            line = testLine;
+          }
+        }
+        context.fillText(line, x, y);
+      }
 
 	function dismissNotification(){
-		showingNotification = false;
+		notificationShowing = false;
 		drawingEnabled = true;
 		clearCanvas(uiCtx);
 		drawUI();
@@ -1231,6 +1275,20 @@ requirejs([
 		}
 	}
 	
+	// no need for big int array transmissions; just render some font onto the canvas ;-)
+	function drawLetterOnBgCanvasFromString(_string){
+		clearCanvas(ctx);
+		clearCanvas(bgCtx);
+		
+		_string = _string.toUpperCase();
+		
+		bgCtx.font = bgCtx.canvas.height * 0.75 + "px monospace";
+		bgCtx.fillStyle = "white";
+		bgCtx.textBaseline = "middle";
+		bgCtx.textAlign = "center";
+		bgCtx.fillText(_string, bgCtx.canvas.width/2, bgCtx.canvas.height/2);
+	}
+	
 	function sendDrawArray(accuracy){
 		var width = ctx.canvas.width;
 		var height = ctx.canvas.height;
@@ -1249,7 +1307,9 @@ requirejs([
 			alert(drawAccuracy);
 		} else drawAccuracy = defaultAccuracy;*/
 		
-		if (currentLetter !== null){
+		if (currentLetter !== null || currentLetterAsString !== null){
+			currentLetter = null;
+			currentLetterAsString = null;
 			clearCanvas(bgCtx);
 			clearCanvas(ctx);
 		}

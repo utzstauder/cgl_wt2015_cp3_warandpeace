@@ -334,6 +334,30 @@ public class HFTGamepad : MonoBehaviour {
 			accuracy = _accuracy;
 		}
 	}
+
+	public class MessageLetterData : MessageCmdData {
+		public string letter = "";
+
+		public MessageLetterData(){
+			
+		}
+
+		public MessageLetterData(string _letter){
+			letter = _letter;
+		}
+	}
+
+	public class MessageNotificationData : MessageCmdData {
+		public string message = "This is a notification";
+
+		public MessageNotificationData(){
+			
+		}
+
+		public MessageNotificationData(string _message){
+			message = _message;
+		}
+	}
 		
 	public class MessageDrawOptions : MessageCmdData {
 		public MessageDrawOptions(DrawOptions _drawOptions){
@@ -381,7 +405,7 @@ public class HFTGamepad : MonoBehaviour {
     SetDefaultColor();
   }
 
-  void SendColor()
+  public void SendColor()
   {
     if (m_netPlayer != null)
     {
@@ -389,7 +413,7 @@ public class HFTGamepad : MonoBehaviour {
     }
   }
 
-  void SetDefaultColor() {
+  public void SetDefaultColor() {
     int colorNdx = s_colorCount++;
 
     // Pick a color
@@ -532,6 +556,14 @@ public class HFTGamepad : MonoBehaviour {
 		int[] drawArray = AlphabetManager.LetterToArray(letter);
 
 		m_netPlayer.SendCmd("receiveLetter", new MessageDrawArray(width, height, drawArray));
+	}
+
+	public void SendLetter(string letter){
+		m_netPlayer.SendCmd("receiveLetterAsString", new MessageLetterData(letter));
+	}
+
+	public void SendNotification(string message){
+		m_netPlayer.SendCmd("receiveNotification", new MessageNotificationData(message));
 	}
 
 	// custom handler
