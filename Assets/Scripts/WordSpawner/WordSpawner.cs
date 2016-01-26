@@ -16,6 +16,8 @@ public class WordSpawner : MonoBehaviour {
 	private LetterPixel m_letterPixelPrefab;
 
 	public int m_arrayDivisionFactor = 2;
+	public float m_letterScale = 1.0f;
+
 	public Vector2 m_wordScaleRange = new Vector2(0.5f, 1.0f);
 
 	private Transform wordDestroyer;
@@ -71,6 +73,20 @@ public class WordSpawner : MonoBehaviour {
 	}
 
 	/*
+	 * Returns true if the DrawInputPlayer _player already submitted a drawing to the queue
+	 */
+	public bool IsPlayerDrawingInQueue(DrawInputPlayer _player){
+		foreach (Drawing drawing in m_drawingQueue){
+			if (drawing.playerId == _player.GetSessionId()){
+				Debug.Log("Player already submitted a drawing. The team is safe!");
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/*
 	 * Call this in free mode
 	 * Accepts multiply drawings per player
 	 */
@@ -84,7 +100,7 @@ public class WordSpawner : MonoBehaviour {
 	}
 
 	public bool IsQueueFull(){
-		return (PlayerManager.s_playerManager.GetNumberOfPlayersInCurrentRound() == m_drawingQueue.Count);
+		return (PlayerManager.s_playerManager.GetNumberOfPlayerAtBeginningOfCurrentRound() == m_drawingQueue.Count);
 	}
 
 	public void SpawnLetterFromDrawing(Drawing _drawing){
@@ -96,6 +112,45 @@ public class WordSpawner : MonoBehaviour {
 		}
 	}
 
+	/*
+	 * Call this to spawn the drawings of one team which have been submitted so far
+	 * You may check for TeamSubmittedAllDrawings first
+	 */
+	public void SpawnWordsOfTeam(int _teamId){
+		//Debug.Log("SpawnWordsOfTeam called");
+		StartCoroutine(SpawnWordsOfTeamCoroutine(_teamId));
+	}
+
+	private IEnumerator SpawnWordsOfTeamCoroutine(int _teamId){
+		//Debug.Log("SpawnWordsOfTeamCoroutine started");
+
+		Vector3 letterPosition = Vector3.zero;
+		float letterPositionX = 0;
+		Word word = Instantiate(m_wordPrefab, transform.position, Quaternion.identity) as Word;
+		word.SetWordSpawnerReference(this);
+
+		// check every drawing in the queue for its team id and spawn the letter
+		for(int d = 0; d < m_drawingQueue.Count; d++){
+			//Debug.Log(m_drawingQueue[d].teamId + "==" + _teamId);
+			if (m_drawingQueue[d].teamId == _teamId){
+
+				Letter letter = SpawnLetter(m_drawingQueue[d], transform.position);
+				letterPositionX = transform.position.x + (d * word.m_wordSpacing);
+				letterPosition = new Vector3(letterPositionX, transform.position.y, 0);
+				letter.transform.position = letterPosition;
+
+				if (letter != null){
+					letter.transform.parent = word.transform;
+				}
+
+				yield return new WaitForSeconds(.33f);
+			}
+		}
+	}
+
+	/*
+	 * Call this to spawn all drawings in the order of which team submitted all drawings first 
+	 */
 	public void SpawnWordsFromQueueByTeamId(){
 		StartCoroutine(SpawnWordsFromQueueByTeamIdCoroutine());
 	}
@@ -137,16 +192,27 @@ public class WordSpawner : MonoBehaviour {
 
 	/*
 	 * Returns TRUE if every team member submitted a drawing
+	 * Should also account for disconnect fallback
 	 */
 	public bool IsTeamReady(int _teamId){
 		int submittedDrawings = 0;
-		List<DrawInputPlayer> playersInTeam = PlayerManager.s_playerManager.GetPlayersOfTeam(_teamId);
+		int playersInTeamAtBeginningOfRound = PlayerManager.s_playerManager.GetNumberOfPlayersInTeamAtBeginningOfRound(_teamId);
+		// List<DrawInputPlayer> playersInTeam = PlayerManager.s_playerManager.GetPlayersOfTeam(_teamId);
 
 		foreach(Drawing drawing in m_drawingQueue){
 			if (drawing.teamId == _teamId) submittedDrawings++;
 		}
 
-		if (submittedDrawings >= playersInTeam.Count) return true;
+		// ">=" accounts for disconnect fallback.
+		// There is only one drawing per player, so we are fine
+		// if someone submitted their drawing and disconnected afterwards
+
+		Debug.Log("Team " + _teamId + " submitted " + submittedDrawings + " of " + playersInTeamAtBeginningOfRound + " drawings.");
+
+		if (submittedDrawings >= playersInTeamAtBeginningOfRound){
+			Debug.Log("Team " + _teamId + " is ready!");
+			return true;
+		}
 
 		return false;
 	}
@@ -246,13 +312,12 @@ public class WordSpawner : MonoBehaviour {
 			Vector3 position;
 			// TODO: set color?
 			Color color = Random.ColorHSV();
-			float letterScale = 1.0f;
 		
 			for (int y = 0; y < currentLetterDrawing.height; y += 2*m_arrayDivisionFactor){
 				for (int x = 0; x < currentLetterDrawing.width; x += 2*m_arrayDivisionFactor){
 					if (currentLetterDrawing.drawing[currentLetterDrawing.width*y + x] > 0){
-						position = transform.position + new Vector3((x * currentLetterDrawing.gap) - (currentLetterDrawing.width / 2 * currentLetterDrawing.gap), (currentLetterDrawing.height / 2 * currentLetterDrawing.gap) - (y * currentLetterDrawing.gap), 0) * letterScale;
-						LetterPixel pixel = spawnLetterPixel(position, letterScale * m_arrayDivisionFactor, color, currentLetterDrawing.accuracy);
+						position = transform.position + new Vector3((x * currentLetterDrawing.gap) - (currentLetterDrawing.width / 2 * currentLetterDrawing.gap), (currentLetterDrawing.height / 2 * currentLetterDrawing.gap) - (y * currentLetterDrawing.gap), 0) * m_letterScale;
+						LetterPixel pixel = spawnLetterPixel(position, m_letterScale * m_arrayDivisionFactor, color, currentLetterDrawing.accuracy);
 						pixel.transform.SetParent(letter.transform);
 					}
 				}
@@ -270,14 +335,18 @@ public class WordSpawner : MonoBehaviour {
 			Letter letter = Instantiate(m_letterPrefab, _position, Quaternion.identity) as Letter;
 
 			Vector3 position;
-			Color color = PlayerManager.s_playerManager.GetPlayerReference(_drawing.playerId).GetPlayerColor();
-			float letterScale = PlayerManager.s_playerManager.GetPlayerReference(_drawing.playerId).letterScale;
+			Color color = Color.white;
+			if (GameManager.s_gameManager.m_currentState == GameManager.GameState.playing_word){
+				color = PlayerManager.s_playerManager.GetTeamColor(_drawing.teamId);
+			} else if (GameManager.s_gameManager.m_currentState == GameManager.GameState.playing_free){
+				color = PlayerManager.s_playerManager.GetPlayerReference(_drawing.playerId).GetPlayerColor();
+			}
 
-			for (int y = 0; y < _drawing.height; y += 1*m_arrayDivisionFactor){
-				for (int x = 0; x < _drawing.width; x += 1*m_arrayDivisionFactor){
+			for (int y = 0; y < _drawing.height; y += m_arrayDivisionFactor){
+				for (int x = 0; x < _drawing.width; x += m_arrayDivisionFactor){
 					if (_drawing.drawing[_drawing.width*y + x] > 0){
-						position = _position + new Vector3((x * _drawing.gap) - (_drawing.width / 2 * _drawing.gap), (_drawing.height / 2 * _drawing.gap) - (y * _drawing.gap), 0) * letterScale;
-						LetterPixel pixel = spawnLetterPixel(position, letterScale * m_arrayDivisionFactor, color, _drawing.accuracy);
+						position = _position + new Vector3((x * _drawing.gap) - (_drawing.width / 2 * _drawing.gap), (_drawing.height / 2 * _drawing.gap) - (y * _drawing.gap), 0) * m_letterScale;
+						LetterPixel pixel = spawnLetterPixel(position, m_letterScale * m_arrayDivisionFactor, color, _drawing.accuracy);
 						pixel.transform.SetParent(letter.transform);
 					}
 				}
@@ -301,7 +370,6 @@ public class WordSpawner : MonoBehaviour {
 		int gap = player.GetDrawingDivision();
 		Color color = player.GetPlayerColor();
 		Vector3 position = Vector3.zero;
-		float pixelScale = player.letterScale;
 
 		if (drawing != null){
 			Letter letter = Instantiate(m_letterPrefab, _position, Quaternion.identity) as Letter;
@@ -309,8 +377,8 @@ public class WordSpawner : MonoBehaviour {
 			for (int y = 0; y < height; y += 1*m_arrayDivisionFactor){
 				for (int x = 0; x < width; x += 1*m_arrayDivisionFactor){
 					if (drawing[width*y + x] > 0){
-						position = _position + new Vector3((x * gap) - (width / 2 * gap), (height / 2 * gap) - (y * gap), 0) * player.letterScale;
-						LetterPixel pixel = spawnLetterPixel(position, pixelScale * (m_arrayDivisionFactor/2.0f), color, accuracy);
+						position = _position + new Vector3((x * gap) - (width / 2 * gap), (height / 2 * gap) - (y * gap), 0) * m_letterScale;
+						LetterPixel pixel = spawnLetterPixel(position, m_letterScale * (m_arrayDivisionFactor/2.0f), color, accuracy);
 						pixel.transform.SetParent(letter.transform);
 					}
 				}

@@ -561,7 +561,7 @@ requirejs([
 	var accelerationThreshold = 40;
 	ctx.lineWidth="15";
 	ctx.strokeStyle="black";
-	var drawArrayDivision = 1;
+	var drawArrayDivision = 4;
 	var defaultAccuracy = 0.5;
 	var accuracyThreshold = 0.75;
 
@@ -610,16 +610,18 @@ requirejs([
 
 
 	// Resize canvases to fit window size
-	canvas.width = window.innerWidth;
-	canvas.height = window.innerHeight;
-	bgCanvas.width = window.innerWidth;
-	bgCanvas.height = window.innerHeight;
-	uiCanvas.width = window.innerWidth;
-	uiCanvas.height = window.innerHeight;
-	debugCanvas.width = window.innerWidth;
-	debugCanvas.height = window.innerHeight;
-	inputCanvas.height = window.innerHeight;
-	inputCanvas.width = window.innerWidth;
+	// Must be a multiple of drawArrayDivision
+	canvas.width = Math.ceil(window.innerWidth/drawArrayDivision) * drawArrayDivision;
+	alert (canvas.width);
+	canvas.height = Math.ceil(window.innerHeight/drawArrayDivision) * drawArrayDivision
+	bgCanvas.width = Math.ceil(window.innerWidth/drawArrayDivision) * drawArrayDivision;
+	bgCanvas.height = Math.ceil(window.innerHeight/drawArrayDivision) * drawArrayDivision
+	uiCanvas.width = Math.ceil(window.innerWidth/drawArrayDivision) * drawArrayDivision;
+	uiCanvas.height = Math.ceil(window.innerHeight/drawArrayDivision) * drawArrayDivision;
+	debugCanvas.width = Math.ceil(window.innerWidth/drawArrayDivision) * drawArrayDivision;
+	debugCanvas.height = Math.ceil(window.innerHeight/drawArrayDivision) * drawArrayDivision;
+	inputCanvas.width = Math.ceil(window.innerWidth/drawArrayDivision) * drawArrayDivision;
+	inputCanvas.height = Math.ceil(window.innerHeight/drawArrayDivision) * drawArrayDivision;
 
 	// UI buttons
 	var buttonClear = button("clear", 0, (uiCanvas.height - uiCanvas.height/10), (uiCanvas.width / 2), uiCanvas.height/10);
@@ -651,16 +653,17 @@ requirejs([
 		var strokeStyleTmp = ctx.strokeStyle;
 		var bgFillStyleTmp = bgCtx.fillStyle;
 		
-		canvas.width = window.innerWidth;
-		canvas.height = window.innerHeight;
-		bgCanvas.width = window.innerWidth;
-		bgCanvas.height = window.innerHeight;
-		uiCanvas.width = window.innerWidth;
-		uiCanvas.height = window.innerHeight;
-		debugCanvas.width = window.innerWidth;
-		debugCanvas.height = window.innerHeight;
-		inputCanvas.height = window.innerHeight;
-		inputCanvas.width = window.innerWidth;
+		canvas.width = Math.ceil(window.innerWidth/drawArrayDivision) * drawArrayDivision;
+		canvas.height = Math.ceil(window.innerHeight/drawArrayDivision) * drawArrayDivision
+		bgCanvas.width = Math.ceil(window.innerWidth/drawArrayDivision) * drawArrayDivision;
+		bgCanvas.height = Math.ceil(window.innerHeight/drawArrayDivision) * drawArrayDivision
+		uiCanvas.width = Math.ceil(window.innerWidth/drawArrayDivision) * drawArrayDivision;
+		uiCanvas.height = Math.ceil(window.innerHeight/drawArrayDivision) * drawArrayDivision;
+		debugCanvas.width = Math.ceil(window.innerWidth/drawArrayDivision) * drawArrayDivision;
+		debugCanvas.height = Math.ceil(window.innerHeight/drawArrayDivision) * drawArrayDivision;
+		inputCanvas.width = Math.ceil(window.innerWidth/drawArrayDivision) * drawArrayDivision;
+		inputCanvas.height = Math.ceil(window.innerHeight/drawArrayDivision) * drawArrayDivision;
+		
 		
 		ctx.lineWidth = lineWidthTmp;
 		ctx.lineCap = lineCapTmp;
@@ -1158,6 +1161,18 @@ requirejs([
 						newArray.push(targetArray[y * width + x]);
 					}
 				}
+			}
+		}
+		
+		return newArray;
+	}
+	
+	function scaleDownArrayNew(width, height, targetArray, scaleFactor){
+		var newArray = [(width / scaleFactor) * (height / scaleFactor)];
+		
+		for (var y = 0; y < height/scaleFactor; y++){
+			for (var x = 0; x < width/scaleFactor; x++){
+				newArray[(width/scaleFactor) * y + x] = targetArray[width * (y * scaleFactor) + (x * scaleFactor)];
 			}
 		}
 		

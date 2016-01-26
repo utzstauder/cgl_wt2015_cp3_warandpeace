@@ -19,11 +19,17 @@ public class PlayerManager : MonoBehaviour {
 	private int m_nPlayers = 0;						// The number of players currently connected to the game
 	private int m_nPlayersCurrentRound = 0;
 
+	private List<int> m_playersInTeamAtBeginningOfRound;
+
 	public delegate void PlayerCountChange();		// Broadcasts a message when the number of players changes; mainly for fallback purposes	
 	public static event PlayerCountChange OnPlayerJoin;
 	public static event PlayerCountChange OnPlayerLeave;
 
 	private int m_numberOfTeams = 0;
+
+
+	// References
+	private WordSpawner m_wordSpawner;
 
 	// Use this for initialization
 	void Awake () {
@@ -35,11 +41,12 @@ public class PlayerManager : MonoBehaviour {
 		}
 
 		m_players = new List<DrawInputPlayer>();
+		m_playersInTeamAtBeginningOfRound = new List<int>();
+
 	}
 	
-	// Update is called once per frame
-	void Update () {
-	
+	void Start () {
+		m_wordSpawner = GameObject.FindGameObjectsWithTag("WordSpawner")[0].GetComponent<WordSpawner>();
 	}
 
 	// This is called by every DrawInputPlayer class upon connecting to the game
@@ -55,7 +62,19 @@ public class PlayerManager : MonoBehaviour {
 
 	// This is called by every DrawInputPlayer upon disconnecting from the
 	public void RemovePlayer(DrawInputPlayer _player){
-		if (_player.IsPlayingInCurrentRound()) m_nPlayersCurrentRound--;
+		if (_player.IsPlayingInCurrentRound()){
+			
+			// fallback only needed while in word mode and when the player did not submit a drawing yet
+			if (GameManager.s_gameManager.m_currentState == GameManager.GameState.playing_word &&
+				!m_wordSpawner.IsPlayerDrawingInQueue(_player)){
+				// TODO: add a substitute drawing to the queue
+				Drawing drawing = AlphabetManager.LetterToDrawing(AlphabetManager.CharToInt(_player.GetCurrentLetter().ToCharArray()[0]), 2);
+				drawing.teamId = _player.GetTeamId();
+				m_wordSpawner.AddFreeDrawingToQueue(drawing);
+			}
+
+			m_nPlayersCurrentRound--;
+		}
 
 		m_players.RemoveAt(m_players.IndexOf(_player));
 
@@ -128,6 +147,12 @@ public class PlayerManager : MonoBehaviour {
 				i = numberOfTeams+1;
 			}
 		}
+
+		// fill list
+		m_playersInTeamAtBeginningOfRound.Clear();
+		for (int i = 1; i <= numberOfTeams; i++){
+			m_playersInTeamAtBeginningOfRound.Add(GetPlayersOfTeam(i).Count);
+		}
 	}
 
 	public int GetNumberOfTeams(){
@@ -153,6 +178,10 @@ public class PlayerManager : MonoBehaviour {
 		}
 
 		return playersInTeam;
+	}
+
+	public int GetNumberOfPlayersInTeamAtBeginningOfRound(int _teamId){
+		return m_playersInTeamAtBeginningOfRound[_teamId-1];
 	}
 
 	/*
@@ -215,6 +244,16 @@ public class PlayerManager : MonoBehaviour {
 		return m_nPlayersCurrentRound;
 	}
 
+	public int GetNumberOfPlayerAtBeginningOfCurrentRound(){
+		int n = 0;
+
+		foreach (int i in m_playersInTeamAtBeginningOfRound){
+			n += i;
+		}
+
+		return n;
+	}
+
 	/*public void SetNumberOfPlayersInCurrentRound(int _nPlayers){
 		m_nPlayersCurrentRound = _nPlayers;
 	}*/
@@ -223,11 +262,11 @@ public class PlayerManager : MonoBehaviour {
 	 * Sets the number of players in the current round and the corresponding flags
 	 * in the DrawInputPlayer references
 	 */
-	public void SetNumberOfPlayersInCurrentRound(){
+	public void SetNumberOfPlayersInCurrentRound(bool _value){
 		m_nPlayersCurrentRound = m_nPlayers;
 
 		foreach (DrawInputPlayer player in m_players){
-			player.SetPlayingInCurrentRound(true);
+			player.SetPlayingInCurrentRound(_value);
 		}
 	}
 

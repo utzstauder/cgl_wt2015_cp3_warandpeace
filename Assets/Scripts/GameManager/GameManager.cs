@@ -150,7 +150,7 @@ public class GameManager : MonoBehaviour {
 		m_roundTimer = 0;
 
 		// determine who is playing the current round
-		PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound();
+		PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound(true);
 
 		// communicate game mode to player clients
 		PlayerManager.s_playerManager.BroadcastCurrentGameMode(m_currentState);
@@ -164,8 +164,10 @@ public class GameManager : MonoBehaviour {
 			// notify the players
 			PlayerManager.s_playerManager.BroadcastNotificationToCurrentRound("You are playing WORD MODE! Communicate with the other players of your color and draw the letters in the correct order!");
 
+			int numberOfTeams = PlayerManager.s_playerManager.GetNumberOfTeams();
+
 			// send letter templates to player clients / teams
-			for (int i = 1; i <= PlayerManager.s_playerManager.GetNumberOfTeams(); i++){
+			for (int i = 1; i <= numberOfTeams; i++){
 				// get a list of players of team i
 				List<DrawInputPlayer> playersInCurrentTeam = PlayerManager.s_playerManager.GetPlayersOfTeam(i);
 
@@ -180,20 +182,29 @@ public class GameManager : MonoBehaviour {
 				}
 			}
 
-
-			while (!m_wordSpawner.IsQueueFull()){
+			Debug.Log("Entering reception loop");
+			while (true){
 				// LOOP; wait for every player to send their drawing
 
-				// TODO: inner LOOP; wait for team members
+				// inner LOOP; check for finished teams
+				for (int t = 1; t <= numberOfTeams; t++){
+					if (m_wordSpawner.IsTeamReady(t)){
+						m_wordSpawner.SpawnWordsOfTeam(t);
+
+						yield return new WaitForSeconds(PlayerManager.s_playerManager.GetPlayersOfTeam(t).Count * 2.0f);
+					}
+				}
 				// TODO: check results (correct order? accuracy?)
 
-				yield return new WaitForSeconds(2.0f);
+				if (m_wordSpawner.IsQueueFull()) break;
+				else yield return new WaitForSeconds(2.0f);
 			}
+			Debug.Log("Leaving reception loop");
 
 			// display the drawings on screen
 			// first come first serve; fastest team or best accuracy? both at the same time
 			// right now, the fastest team gets drawn first
-			m_wordSpawner.SpawnWordsFromQueueByTeamId();
+			// m_wordSpawner.SpawnWordsFromQueueByTeamId();
 
 			// TODO: players that are done will receive a "waiting for player(s)..." promt
 			// this will probably happen on the smartphone
@@ -213,6 +224,8 @@ public class GameManager : MonoBehaviour {
 				yield return new WaitForEndOfFrame();
 			}
 		}
+
+		PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound(false);
 
 		// remove flag for "round started"
 		m_roundStarted = false;
@@ -253,6 +266,8 @@ public class GameManager : MonoBehaviour {
 	 * 
 	 */
 	private void OnPlayerLeave(){
+		/*
+		 * DEPRECATED
 		if (m_currentState == GameState.playing_word){
 			// TODO: Check which letter the player was supposed to draw
 			// TODO: communicate to other players
@@ -271,11 +286,12 @@ public class GameManager : MonoBehaviour {
 				InvokeRepeating("Screensaver", 0, m_timeInBetweenWords);
 			}
 		}
+		*/
 	}
 
 	// This is called once a word was successfully generated
 	public void OnWordSpawned(){
-		PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound();
+		PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound(true);
 		StartNewRound();
 	}
 
@@ -305,7 +321,7 @@ public class GameManager : MonoBehaviour {
 	 */
 	public void SendRandomLetters(){
 		int currentNumberOfPlayers = PlayerManager.s_playerManager.GetNumberOfPlayers();
-		PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound();
+		PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound(true);
 
 		int[] randomLetters = WordManager.s_wordManager.GetRandomLetters(currentNumberOfPlayers);
 
@@ -321,7 +337,7 @@ public class GameManager : MonoBehaviour {
 	public void SendRandomWord(){
 		int currentNumberOfPlayers = PlayerManager.s_playerManager.GetNumberOfPlayers();
 
-		PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound();
+		PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound(true);
 
 		string word = WordManager.s_wordManager.GetRandomWord(currentNumberOfPlayers);
 		Debug.Log(word);
