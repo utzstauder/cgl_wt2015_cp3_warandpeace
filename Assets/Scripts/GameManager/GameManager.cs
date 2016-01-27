@@ -531,7 +531,7 @@ public class GameManager : MonoBehaviour {
 			GUI.Label(new Rect(20, 10, 300, 30), 	"SCORE:      " + m_score);
 		} else GUI.Label(new Rect(20, 10, 300, 30), "CASUALTIES: " + m_score);
 
-		if (m_currentState == GameState.playing_free && m_roundStarted){
+		if (m_currentState == GameState.playing_free && m_roundStarted && m_roundTimer > 0){
 			GUI.Label(new Rect(20, Screen.height - 40, 300, 20), "TIME UNTIL NEXT ROUND: " + (m_freeModeRoundTime - m_roundTimer));
 		}
 	}
