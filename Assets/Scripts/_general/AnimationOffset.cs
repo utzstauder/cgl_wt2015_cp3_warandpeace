@@ -8,7 +8,7 @@ public class AnimationOffset : MonoBehaviour {
 	[SerializeField]
 	private Animator[] m_animators;
 
-	void Start () {
+	void OnEnable () {
 		float randomFloat = Random.Range(0.0f, 1.0f);
 
 		foreach (Animator animator in m_animators){
@@ -18,7 +18,7 @@ public class AnimationOffset : MonoBehaviour {
 
 	public void SetAnimationOffset(){
 		float randomFloat = Random.Range(0.0f, 1.0f);
-
+	
 		foreach (Animator animator in m_animators){
 			animator.Play(m_AnimationLayerName, 0, randomFloat);
 		}

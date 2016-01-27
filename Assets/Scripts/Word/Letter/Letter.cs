@@ -3,8 +3,6 @@ using System.Collections;
 
 public class Letter : MonoBehaviour {
 
-	public float deathX = -400;
-
 	public bool wiggleInChildren = false;
 	private bool prevWiggleInChildren;
 
@@ -13,6 +11,10 @@ public class Letter : MonoBehaviour {
 	// Use this for initialization
 	void Awake () {
 		prevWiggleInChildren = false;
+	}
+
+	void Start(){
+		InvokeRepeating("CheckDestroyerPosition", 5.0f, 1.0f);
 	}
 	
 	// Update is called once per frame
@@ -26,6 +28,13 @@ public class Letter : MonoBehaviour {
 		//if (transform.childCount <= 0) Destroy(this.gameObject);
 
 		//if (transform.position.x < deathX) Destroy(this.gameObject);
+	}
+
+	private void CheckDestroyerPosition(){
+		if ((transform.position.x <= GameManager.s_gameManager.m_wordSpawner.m_wordDestroyer.position.x) &&
+			(transform.childCount <= 0)){
+			Destroy(this.gameObject, 1.0f);
+		}
 	}
 
 	void OnWiggleInChildrenChange(bool param){

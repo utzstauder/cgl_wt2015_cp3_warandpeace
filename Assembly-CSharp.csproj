@@ -82,6 +82,7 @@
      <Compile Include="Assets\Scripts\Word\Letter\Letter.cs" />
      <Compile Include="Assets\Scripts\Word\Letter\LetterPixel\LetterPixel.cs" />
      <Compile Include="Assets\Scripts\Word\Word.cs" />
+     <Compile Include="Assets\Scripts\WordDestroyer\WordDestroyer.cs" />
      <Compile Include="Assets\Scripts\WordSpawner\WordSpawner.cs" />
      <Compile Include="Assets\Scripts\_general\AnimationOffset.cs" />
      <Compile Include="Assets\Scripts\_general\ArrayFunctions.cs" />

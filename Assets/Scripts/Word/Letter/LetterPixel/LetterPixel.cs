@@ -12,6 +12,8 @@ public class LetterPixel : MonoBehaviour {
 	private int initialHp;
 	private int currentHp;
 
+	private Transform m_poolParent;
+
 	public SpriteRenderer m_spriteRendererArcade;
 	public SpriteRenderer m_spriteRendererRealisticFaceless;
 	public SpriteRenderer m_spriteRendererRealisticFacemore;
@@ -20,13 +22,31 @@ public class LetterPixel : MonoBehaviour {
 
 	private Letter parent;
 
-	// Use this for initialization
-	void Awake() {
-		
+	private AnimationOffset m_animationOffset;
+
+	void Awake(){
+		m_animationOffset = GetComponent<AnimationOffset>();
+	}
+
+	void OnEnable(){
+		//m_animationOffset.SetAnimationOffset();
+		InvokeRepeating("CheckDestroyerPosition", 5.0f, 1.0f);
+	}
+
+	void OnDisable(){
+		CancelInvoke();
+		//if (parent) parent.CheckChildCount();
+	}
+
+	public void Deactivate(){
+		transform.parent = m_poolParent;
+		gameObject.SetActive(false);
 	}
 
 	// Use this to initialize externally (usually from script that instantiates this object)
-	public void Init(float _accuracy, Color _color){
+	public void Init(float _accuracy, Color _color, Transform _poolParent){
+		m_poolParent = _poolParent;
+
 		//initialHp = (int)Mathf.Round((float)maxHp * _accuracy);
 		initialHp = maxHp;
 
@@ -35,13 +55,17 @@ public class LetterPixel : MonoBehaviour {
 		if (m_spriteRendererArcade) m_spriteRendererArcade.color = Color.Lerp(Color.black, _color, _accuracy);
 		if (m_spriteRendererRealisticFaceless) m_spriteRendererRealisticFaceless.color = Color.Lerp(Color.black, _color, _accuracy);
 		if (m_spriteRendererRealisticFacemore) m_spriteRendererRealisticFacemore.color = SkincolorManager.s_skincolorManager.GetRandomSkincolor();
-
-		GetComponent<AnimationOffset>().SetAnimationOffset();
 	}
 
 	public void SetParent(Letter _parent){
 		parent = _parent;
 		transform.parent = _parent.transform;
+	}
+
+	private void CheckDestroyerPosition(){
+		if (transform.position.x <= GameManager.s_gameManager.m_wordSpawner.m_wordDestroyer.position.x){
+			Deactivate();
+		}
 	}
 
 	public void ApplyDamage(int _damage){
@@ -54,7 +78,8 @@ public class LetterPixel : MonoBehaviour {
 		if (currentHp <= 0){
 			GameManager.s_gameManager.AddScore(m_points);
 			Destroy(Instantiate(m_corpsePrefab, transform.position, Quaternion.Euler(0, 0, Random.Range(0.0f, 360.0f))), 20.0f);
-			Destroy(this.gameObject);
+			//Destroy(this.gameObject);
+			Deactivate();
 		}
 	}
 
@@ -62,10 +87,6 @@ public class LetterPixel : MonoBehaviour {
 		if (_other.gameObject.CompareTag("Deadly")){
 			ApplyDamage(maxHp);
 		}
-	}
-
-	void OnDestroy(){
-		if (parent) parent.CheckChildCount();
 	}
 
 }

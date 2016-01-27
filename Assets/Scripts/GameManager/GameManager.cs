@@ -22,7 +22,7 @@ public class GameManager : MonoBehaviour {
 
 	// References
 	public static GameManager s_gameManager;
-	private WordSpawner m_wordSpawner;
+	public WordSpawner m_wordSpawner;
 
 	// Artstyle change variables
 	public bool m_artstyleDefaultMode = true;
@@ -70,6 +70,10 @@ public class GameManager : MonoBehaviour {
 	void OnDestroy(){
 		PlayerManager.OnPlayerJoin -= OnPlayerJoin;
 		PlayerManager.OnPlayerLeave -= OnPlayerLeave;
+	}
+
+	void OnApplicationQuit(){
+		ChangeGameState(GameState.end);
 	}
 	
 	// Update is called once per frame
@@ -141,12 +145,6 @@ public class GameManager : MonoBehaviour {
 	 * Resets everything to start a clean round
 	 */
 	private void ResetGame(){
-		// clean up
-		GameObject[] wordsInScene = GameObject.FindGameObjectsWithTag("Word");
-		foreach (GameObject word in wordsInScene){
-			Destroy(word.gameObject);
-		}
-
 		m_score = 0;
 		m_screensaverWordIndex = 0;
 
@@ -157,6 +155,8 @@ public class GameManager : MonoBehaviour {
 		}
 
 		//InvokeRepeating("Screensaver", 0, m_timeInBetweenWords);
+
+		m_wordSpawner.DeactivateAllPixelsInPool();
 
 		StartCoroutine(Screensaver());
 	}

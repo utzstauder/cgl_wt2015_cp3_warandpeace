@@ -24,7 +24,7 @@ public class Word : MonoBehaviour {
 			transform.position += m_speed * Time.deltaTime;
 		}*/
 
-		if (transform.position.x <= m_wordSpawner.GetDeathX()) Destroy(this.gameObject);
+		//if (transform.position.x <= m_wordSpawner.GetDeathX()) Destroy(this.gameObject);
 	}
 
 	public void CheckChildCount(){

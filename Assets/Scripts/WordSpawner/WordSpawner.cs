@@ -20,7 +20,7 @@ public class WordSpawner : MonoBehaviour {
 
 	public Vector2 m_wordScaleRange = new Vector2(0.5f, 1.0f);
 
-	private Transform wordDestroyer;
+	public Transform m_wordDestroyer;
 	private float deathX = 0;
 
 	// the drawing queue
@@ -29,6 +29,10 @@ public class WordSpawner : MonoBehaviour {
 
 	public float m_timeUntilNextDrawingInFreeMode = 2.0f;
 
+	// pooled letterPixel objects
+	private List<LetterPixel> m_letterPixelPool;
+	public int m_initialPoolSize = 10000;
+
 	void Awake(){
 		m_drawingQueue = new List<Drawing>();
 		m_teamSubmissionOrder = new List<int>();
@@ -36,9 +40,42 @@ public class WordSpawner : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		wordDestroyer = GameObject.FindGameObjectWithTag("WordDestroyer").transform;
+		m_wordDestroyer = GameObject.FindGameObjectWithTag("WordDestroyer").transform;
 
-		deathX = wordDestroyer.position.x;
+		deathX = m_wordDestroyer.position.x;
+
+		// Fill the letterPixelPool
+		m_letterPixelPool = new List<LetterPixel>();
+
+		StartCoroutine(AddPixelsToPool(m_initialPoolSize));
+	}
+
+	private IEnumerator AddPixelsToPool(int _amount){
+		for (int i = 0; i < m_initialPoolSize; i++){
+			LetterPixel letterPixel = Instantiate(m_letterPixelPrefab, Vector3.zero, Quaternion.identity) as LetterPixel;
+			letterPixel.transform.parent = this.transform;
+			letterPixel.gameObject.SetActive(false);
+			m_letterPixelPool.Add(letterPixel);
+
+			if (i%(_amount/10) == 0) yield return new WaitForSeconds(3.0f/10.0f);
+		}
+		Debug.Log("PixelPool filled");
+	}
+
+	public void DeactivateAllPixelsInPool(){
+		for (int i = 0; i < m_letterPixelPool.Count; i++){
+			if (m_letterPixelPool[i]) m_letterPixelPool[i].gameObject.SetActive(false);
+		}
+	}
+
+	/*
+	 * Looks for an inactive letterPixel object
+	 */
+	private LetterPixel GetInactivePixelFromPool(){
+		foreach (LetterPixel pixel in m_letterPixelPool){
+			if (!pixel.gameObject.activeSelf) return pixel;
+		}
+		return null;
 	}
 
 	public float GetDeathX(){
@@ -57,7 +94,7 @@ public class WordSpawner : MonoBehaviour {
 		foreach (Drawing drawing in m_drawingQueue){
 			if (drawing.playerId == _drawing.playerId){
 				alreadyInQueue = true;
-				Debug.Log("Player " + PlayerManager.s_playerManager.GetPlayerReference(_drawing.playerId).name + " alredy submitted a drawing");
+				Debug.Log("Player " + PlayerManager.s_playerManager.GetPlayerReference(_drawing.playerId).name + " already submitted a drawing");
 			}
 		}
 
@@ -341,7 +378,7 @@ public class WordSpawner : MonoBehaviour {
 			*/
 
 			yield return StartCoroutine(SpawnLetterFromCharCoroutine(_word[i], word.transform));
-			Debug.Log("Spawned " + _word[i]);
+			//Debug.Log("Spawned " + _word[i]);
 			//yield return new WaitForSeconds(.1f);
 		}
 
@@ -536,9 +573,19 @@ public class WordSpawner : MonoBehaviour {
 	// TODO: basically done
 	// Spawns a letterPixel
 	private LetterPixel spawnLetterPixel(Vector3 _position, float _scale, Color _color, float _accuracy){
-		LetterPixel letterPixel = Instantiate(m_letterPixelPrefab, _position, Quaternion.identity) as LetterPixel;
-		letterPixel.transform.localScale *= _scale;
-		letterPixel.Init(_accuracy, _color);
+		//LetterPixel letterPixel = Instantiate(m_letterPixelPrefab, _position, Quaternion.identity) as LetterPixel;
+		LetterPixel letterPixel = GetInactivePixelFromPool();
+
+		// If there is no inactive pixel add more to the pool
+		if (letterPixel == null){
+			letterPixel = Instantiate(m_letterPixelPrefab, Vector3.zero, Quaternion.identity) as LetterPixel;
+			m_letterPixelPool.Add(letterPixel);
+		}
+
+		letterPixel.gameObject.SetActive(true);
+		letterPixel.transform.position = _position;
+		letterPixel.transform.localScale = Vector3.one * _scale;
+		letterPixel.Init(_accuracy, _color, this.transform);
 
 		//letterPixel.GetComponent<SpriteRenderer>().color = Color.Lerp(Color.black, _color, _accuracy);
 		//letterPixel.GetComponent<SpriteRenderer>().sprite.pixelsPerUnit *= _scale;
