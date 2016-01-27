@@ -612,7 +612,6 @@ requirejs([
 	// Resize canvases to fit window size
 	// Must be a multiple of drawArrayDivision
 	canvas.width = Math.ceil(window.innerWidth/drawArrayDivision) * drawArrayDivision;
-	alert (canvas.width);
 	canvas.height = Math.ceil(window.innerHeight/drawArrayDivision) * drawArrayDivision
 	bgCanvas.width = Math.ceil(window.innerWidth/drawArrayDivision) * drawArrayDivision;
 	bgCanvas.height = Math.ceil(window.innerHeight/drawArrayDivision) * drawArrayDivision
@@ -1056,6 +1055,7 @@ requirejs([
 			currentLetter = null;
 		} else if (gameState === "playing_free"){
 			sendDrawArray(defaultAccuracy);
+			clearCanvas(ctx);
 		}
 	}
 

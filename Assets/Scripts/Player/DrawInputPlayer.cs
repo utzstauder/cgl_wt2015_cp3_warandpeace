@@ -304,7 +304,7 @@ public class DrawInputPlayer : MonoBehaviour {
 	}
 
 	public void SendNotification(string _message){
-		m_gamepad.SendNotification(_message);
+		if (m_gamepad) m_gamepad.SendNotification(_message);
 	}
 
 	public void PlaySound(string filenameWithoutExtension){

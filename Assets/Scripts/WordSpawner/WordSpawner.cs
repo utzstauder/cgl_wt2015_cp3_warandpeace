@@ -27,6 +27,8 @@ public class WordSpawner : MonoBehaviour {
 	private List<Drawing> m_drawingQueue;
 	private List<int> m_teamSubmissionOrder;
 
+	public float m_timeUntilNextDrawingInFreeMode = 2.0f;
+
 	void Awake(){
 		m_drawingQueue = new List<Drawing>();
 		m_teamSubmissionOrder = new List<int>();
@@ -104,12 +106,17 @@ public class WordSpawner : MonoBehaviour {
 	}
 
 	public void SpawnLetterFromDrawing(Drawing _drawing){
+		StartCoroutine(SpawnLetterFromDrawingCoroutine(_drawing));
+	}
+
+	private IEnumerator SpawnLetterFromDrawingCoroutine(Drawing _drawing){
 		Word word = Instantiate(m_wordPrefab, transform.position, Quaternion.identity) as Word;
 		word.SetWordSpawnerReference(this);
 		Letter letter = SpawnLetter(_drawing, transform.position);
 		if (letter != null){
 			letter.transform.parent = word.transform;
 		}
+		yield return new WaitForEndOfFrame();
 	}
 
 	/*
@@ -215,6 +222,45 @@ public class WordSpawner : MonoBehaviour {
 		}
 
 		return false;
+	}
+
+	/*
+	 * Starts the coroutine in free mode
+	 */
+	public void SpawnDrawingsFromQueue(){
+		StartCoroutine(SpawnDrawingsFromQueueCoroutine());
+	}
+
+	/*
+	 * Ends the coroutine in free mode
+	 */
+	public void StopSpawning(){
+		StopCoroutine(SpawnDrawingsFromQueueCoroutine());
+	}
+
+	/*
+	 * This checks for drawing in the queue every m_timeUntilNextDrawingInFreeMode seconds
+	 * and spawns them as words
+	 */
+	private IEnumerator SpawnDrawingsFromQueueCoroutine(){
+		Debug.Log("Started spawning coroutine");
+
+		while (true){
+			if (GameManager.s_gameManager.m_currentState == GameManager.GameState.playing_free){
+				// dont do anything if there is no drawing
+				if (m_drawingQueue.Count >= 1){
+					// pull drawing
+					Drawing drawing = m_drawingQueue[0];
+				
+					// spawn drawing
+					SpawnLetterFromDrawing(drawing);
+
+					// remove drawing from queue afterwards
+					m_drawingQueue.Remove(drawing);
+				}
+			}
+			yield return new WaitForSeconds(m_timeUntilNextDrawingInFreeMode);
+		}
 	}
 
 	public void SpawnLettersFromQueue(){
