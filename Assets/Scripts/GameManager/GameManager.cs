@@ -196,9 +196,6 @@ public class GameManager : MonoBehaviour {
 			// wait for round to start
 			yield return new WaitForSeconds(m_timeUntilNextRound);
 
-			// set flag for "round started"
-			m_roundStarted = true;
-
 			// reset/start (internal) clock for round time
 			m_roundTimer = 0;
 
@@ -236,6 +233,9 @@ public class GameManager : MonoBehaviour {
 						playersInCurrentTeam[c].DrawLetterOnBackgroundFromString(word[c].ToString());
 					}
 				}
+
+				// set flag for "round started"
+				m_roundStarted = true;
 
 				Debug.Log("Entering reception loop");
 				while (true){
@@ -286,6 +286,9 @@ public class GameManager : MonoBehaviour {
 				// reset the round timer
 				m_roundTimer = 0;
 
+				// set flag for "round started"
+				m_roundStarted = true;
+
 				while (true){
 
 					// increment timer only when there are enough players for word mode
@@ -306,10 +309,10 @@ public class GameManager : MonoBehaviour {
 				//m_wordSpawner.StopSpawning();
 			}
 
-			PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound(false);
-
 			// remove flag for "round started"
 			m_roundStarted = false;
+
+			PlayerManager.s_playerManager.SetNumberOfPlayersInCurrentRound(false);
 
 			yield return new WaitForEndOfFrame();
 		}
@@ -350,23 +353,13 @@ public class GameManager : MonoBehaviour {
 	// TODO: for testing
 	public void OnPlayerReceivedDrawing(DrawInputPlayer _player){
 		//Debug.Log("OnPlayerReceivedDrawing");
-		if (m_currentState == GameState.playing_word){
-			m_wordSpawner.AddLetterDrawingToQueue(_player.GetCurrentDrawing());
-
-			/*// Check if queue full
-			if (m_wordSpawner.IsQueueFull()){
-				m_wordSpawner.SpawnLettersFromQueue();
-			}*/
-
-		} else if (m_currentState == GameState.playing_free) {
-			// spawn free drawings
-			//m_wordSpawner.SpawnLetterFromDrawing(_player.GetCurrentDrawing());
-			m_wordSpawner.AddFreeDrawingToQueue(_player.GetCurrentDrawing());
+		if (m_roundStarted){
+			if (m_currentState == GameState.playing_word){
+				m_wordSpawner.AddLetterDrawingToQueue(_player.GetCurrentDrawing());
+			} else if (m_currentState == GameState.playing_free) {
+				m_wordSpawner.AddFreeDrawingToQueue(_player.GetCurrentDrawing());
+			}
 		}
-		
-		/*int[] playerIds = new int[1];
-		playerIds[0] = PlayerManager.s_playerManager.GetPlayerIndex(_player);
-		m_wordSpawner.SpawnWord(playerIds);*/
 	}
 
 	/* Start a round with random letters
