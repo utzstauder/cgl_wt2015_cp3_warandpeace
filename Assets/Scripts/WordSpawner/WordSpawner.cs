@@ -112,11 +112,17 @@ public class WordSpawner : MonoBehaviour {
 	private IEnumerator SpawnLetterFromDrawingCoroutine(Drawing _drawing){
 		Word word = Instantiate(m_wordPrefab, transform.position, Quaternion.identity) as Word;
 		word.SetWordSpawnerReference(this);
-		Letter letter = SpawnLetter(_drawing, transform.position);
+
+		/*Letter letter = SpawnLetter(_drawing, transform.position);
 		if (letter != null){
 			letter.transform.parent = word.transform;
 		}
 		yield return new WaitForEndOfFrame();
+		*/
+
+		yield return StartCoroutine(SpawnLetterCoroutine(_drawing, word.transform));
+
+		word.GetComponent<ScrollWithBackground>().m_Scroll = true;
 	}
 
 	/*
@@ -128,7 +134,7 @@ public class WordSpawner : MonoBehaviour {
 		StartCoroutine(SpawnWordsOfTeamCoroutine(_teamId));
 	}
 
-	private IEnumerator SpawnWordsOfTeamCoroutine(int _teamId){
+	public IEnumerator SpawnWordsOfTeamCoroutine(int _teamId){
 		//Debug.Log("SpawnWordsOfTeamCoroutine started");
 
 		Vector3 letterPosition = Vector3.zero;
@@ -141,6 +147,7 @@ public class WordSpawner : MonoBehaviour {
 			//Debug.Log(m_drawingQueue[d].teamId + "==" + _teamId);
 			if (m_drawingQueue[d].teamId == _teamId){
 
+				/*
 				Letter letter = SpawnLetter(m_drawingQueue[d], transform.position);
 				letterPositionX = transform.position.x + (d * word.m_wordSpacing);
 				letterPosition = new Vector3(letterPositionX, transform.position.y, 0);
@@ -151,8 +158,19 @@ public class WordSpawner : MonoBehaviour {
 				}
 
 				yield return new WaitForSeconds(.33f);
+				*/
+
+				yield return StartCoroutine(SpawnLetterCoroutine(m_drawingQueue[d], word.transform));
 			}
 		}
+
+		for (int c = 0; c < word.transform.childCount; c++){
+			letterPositionX = transform.position.x + (c * word.m_wordSpacing);
+			letterPosition = new Vector3(letterPositionX, transform.position.y, 0);
+			word.transform.GetChild(c).transform.position = letterPosition;
+		}
+
+		word.GetComponent<ScrollWithBackground>().m_Scroll = true;
 	}
 
 	/*
@@ -214,13 +232,12 @@ public class WordSpawner : MonoBehaviour {
 		// There is only one drawing per player, so we are fine
 		// if someone submitted their drawing and disconnected afterwards
 
-		Debug.Log("Team " + _teamId + " submitted " + submittedDrawings + " of " + playersInTeamAtBeginningOfRound + " drawings.");
+
 
 		if (submittedDrawings >= playersInTeamAtBeginningOfRound){
-			Debug.Log("Team " + _teamId + " is ready!");
 			return true;
 		}
-
+		Debug.Log("Team " + _teamId + " submitted " + submittedDrawings + " of " + playersInTeamAtBeginningOfRound + " drawings.");
 		return false;
 	}
 
@@ -311,8 +328,9 @@ public class WordSpawner : MonoBehaviour {
 		word.SetWordSpawnerReference(this);
 
 		for (int i = 0; i < _word.Length; i++){
+			/*
 			Letter letter = SpawnLetterFromChar(_word[i]);
-			letterPositionX = transform.position.x /*- (numberOfLetters * word.m_wordSpacing)/2.0f */ + (i * word.m_wordSpacing);
+			letterPositionX = transform.position.x + (i * word.m_wordSpacing/2);
 			letterPosition = new Vector3(letterPositionX, transform.position.y, 0);
 			letter.transform.position = letterPosition;
 			if (letter != null){
@@ -320,7 +338,20 @@ public class WordSpawner : MonoBehaviour {
 			}
 
 			yield return new WaitForEndOfFrame();
+			*/
+
+			yield return StartCoroutine(SpawnLetterFromCharCoroutine(_word[i], word.transform));
+			Debug.Log("Spawned " + _word[i]);
+			//yield return new WaitForSeconds(.1f);
 		}
+
+		for (int c = 0; c < word.transform.childCount; c++){
+			letterPositionX = transform.position.x + (c * word.m_wordSpacing/2);
+			letterPosition = new Vector3(letterPositionX, transform.position.y, 0);
+			word.transform.GetChild(c).transform.position = letterPosition;
+		}
+
+		word.GetComponent<ScrollWithBackground>().m_Scroll = true;
 	}
 
 	// TODO: deprecated
@@ -401,6 +432,72 @@ public class WordSpawner : MonoBehaviour {
 			return letter;
 		}
 		return null;
+	}
+
+	private IEnumerator SpawnLetterCoroutine(Drawing _drawing, Transform _parent){
+		if (_drawing != null){
+			Letter letter = Instantiate(m_letterPrefab, transform.position, Quaternion.identity) as Letter;
+
+			letter.transform.parent = _parent;
+
+			Vector3 position;
+			Color color = Color.white;
+			if (GameManager.s_gameManager.m_currentState == GameManager.GameState.playing_word){
+				color = PlayerManager.s_playerManager.GetTeamColor(_drawing.teamId);
+			} else if (GameManager.s_gameManager.m_currentState == GameManager.GameState.playing_free){
+				color = PlayerManager.s_playerManager.GetPlayerReference(_drawing.playerId).GetPlayerColor();
+			}
+
+			for (int y = 0; y < _drawing.height; y += m_arrayDivisionFactor){
+				for (int x = 0; x < _drawing.width; x += m_arrayDivisionFactor){
+					if (_drawing.drawing[_drawing.width*y + x] > 0){
+						position = transform.position + new Vector3((x * _drawing.gap) - (_drawing.width / 2 * _drawing.gap), (_drawing.height / 2 * _drawing.gap) - (y * _drawing.gap), 0) * m_letterScale;
+						LetterPixel pixel = spawnLetterPixel(position, m_letterScale * m_arrayDivisionFactor, color, _drawing.accuracy);
+						if (letter) {
+							pixel.transform.SetParent(letter.transform);
+						} else {
+							Destroy(pixel.gameObject);
+						}
+					}
+				}
+
+				yield return new WaitForEndOfFrame();
+			}
+
+			if (letter.transform.childCount <= 0) Destroy(letter.gameObject);
+		}
+	}
+
+	private IEnumerator SpawnLetterFromCharCoroutine(char _char, Transform _parent){
+		Drawing drawing = AlphabetManager.LetterToDrawing(AlphabetManager.CharToInt(_char), m_arrayDivisionFactor/2);
+
+		Letter letter = Instantiate(m_letterPrefab, transform.position, Quaternion.identity) as Letter;
+
+		if (_parent){
+			letter.transform.parent = _parent;
+		}
+		else {
+			Destroy(letter.gameObject);
+		}
+
+		Vector3 position;
+		Color color = Color.white;
+
+		for (int y = 0; y < drawing.height; y += m_arrayDivisionFactor){
+			for (int x = 0; x < drawing.width; x += m_arrayDivisionFactor){
+				if (drawing.drawing[drawing.width*y + x] > 0){
+					position = transform.position + new Vector3((x * drawing.gap) - (drawing.width / 2 * drawing.gap), (drawing.height / 2 * drawing.gap) - (y * drawing.gap), 0) * m_letterScale;
+					LetterPixel pixel = spawnLetterPixel(position, m_letterScale * m_arrayDivisionFactor, color, drawing.accuracy);
+					if (letter) {
+						pixel.transform.SetParent(letter.transform);
+					} else {
+						Destroy(pixel.gameObject);
+					}
+				}
+			}
+
+			yield return new WaitForEndOfFrame();
+		}
 	}
 
 	// TODO: deprecated

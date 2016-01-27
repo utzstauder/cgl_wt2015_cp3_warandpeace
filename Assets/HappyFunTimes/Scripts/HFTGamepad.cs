@@ -249,6 +249,8 @@ public class HFTGamepad : MonoBehaviour {
 	public int[] drawArray;
 	[System.NonSerialized]
 	public float drawAccuracy;
+	[System.NonSerialized]
+	public string drawGamemode;
 
   // Manages the connection between this object and the phone.
   private NetPlayer m_netPlayer;
@@ -316,6 +318,7 @@ public class HFTGamepad : MonoBehaviour {
 		public int height = 0;
 		public int[] drawArray;
 		public float accuracy = 1.0f;
+		public string gamemode = "";
 
 		public MessageDrawArray(){
 			
@@ -349,6 +352,8 @@ public class HFTGamepad : MonoBehaviour {
 
 	public class MessageNotificationData : MessageCmdData {
 		public string message = "This is a notification";
+		public bool dismissable = true;
+		public float timeout = 0.0f;
 
 		public MessageNotificationData(){
 			
@@ -356,6 +361,12 @@ public class HFTGamepad : MonoBehaviour {
 
 		public MessageNotificationData(string _message){
 			message = _message;
+		}
+
+		public MessageNotificationData(string _message, bool _dismissable, float _timeout){
+			message = _message;
+			dismissable = _dismissable;
+			timeout = _timeout;
 		}
 	}
 		
@@ -562,8 +573,8 @@ public class HFTGamepad : MonoBehaviour {
 		m_netPlayer.SendCmd("receiveLetterAsString", new MessageLetterData(letter));
 	}
 
-	public void SendNotification(string message){
-		m_netPlayer.SendCmd("receiveNotification", new MessageNotificationData(message));
+	public void SendNotification(string message, bool dismissable, float timeout){
+		m_netPlayer.SendCmd("receiveNotification", new MessageNotificationData(message, dismissable, timeout));
 	}
 
 	// custom handler
@@ -575,6 +586,7 @@ public class HFTGamepad : MonoBehaviour {
 		drawArray = new int[data.width * data.height];
 		drawArray = data.drawArray;
 		drawAccuracy = data.accuracy;
+		drawGamemode = data.gamemode;
 
 		OnReceiveDrawing();
 	}

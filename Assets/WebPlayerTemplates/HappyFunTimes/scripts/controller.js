@@ -578,6 +578,9 @@ requirejs([
 
 	// notification variables
 	var drawingEnabled = true;
+	var notificationDismissable = true;
+	var notificationTimeout = 0;
+	var notificationTimerFunction = null;
 	var notificationShowing = false;
 	var notificationText = "THIS IS A RANDOM NOTIFICATION!";
 
@@ -766,7 +769,14 @@ requirejs([
 		drawingEnabled = false;
 
 		notificationText = data.message;
-
+		notificationDismissable = data.dismissable;
+		notificationTimeout = data.timeout;
+		
+		if (!notificationDismissable){
+			clearTimeout(notificationTimerFunction);
+			//notificationTimerFunction = setTimeout(dismissNotification(), notificationTimeout * 1000);
+		}
+		
 		drawNotification();
 	}
 
@@ -798,10 +808,10 @@ requirejs([
 				//sendDrawArray();
 				//alert(acceleration.x +"/"+ acceleration.y +"/"+ acceleration.z);
 				
-				if (gameState === "playing_free"){
+				/*if (gameState === "playing_free"){
 					// for showcasing
 					sendDrawArray(defaultAccuracy);
-				}
+				}*/
 				clearCanvas(ctx);
 				
 				/*if (confirm("Clear canvas?")){
@@ -823,8 +833,8 @@ requirejs([
 	function inputTouchStart(event){
 		event.preventDefault();
 
-		if (notificationShowing){
-			dismissNotification();
+		if (notificationShowing === true){
+			if (notificationDismissable) dismissNotification();
 		} else if (buttonCollision(buttonClear, event.touches[0].pageX, event.touches[0].pageY)){
 					buttonClearPressed();
 				} else if (buttonCollision(buttonSend, event.touches[0].pageX, event.touches[0].pageY)){
@@ -850,7 +860,7 @@ requirejs([
 		event.preventDefault();
 
 		if (notificationShowing){
-			dismissNotification();
+			if (notificationDismissable) dismissNotification();
 		} else if (buttonCollision(buttonClear, event.pageX, event.pageY)){
 					buttonClearPressed();
 				} else if (buttonCollision(buttonSend, event.pageX, event.pageY)){
@@ -1082,7 +1092,7 @@ requirejs([
 		uiCtx.textAlign = "center";
 		
 		//uiCtx.fillText(notificationText, uiCtx.canvas.width/2, uiCtx.canvas.height/2);
-		wrapText(uiCtx, notificationText, uiCtx.canvas.width/2, uiCtx.canvas.height*1/3, uiCtx.canvas.width*2/3, 30);
+		wrapText(uiCtx, notificationText, uiCtx.canvas.width/2, uiCtx.canvas.height*1/3, uiCtx.canvas.width*3/4, 30);
 	}
 	
 	// found this at: http://www.html5canvastutorials.com/tutorials/html5-canvas-wrap-text-tutorial/
@@ -1109,6 +1119,11 @@ requirejs([
 	function dismissNotification(){
 		notificationShowing = false;
 		drawingEnabled = true;
+		
+		notificationText = "";
+		notificationDismissable = true;
+		notificationTimeout = 0;
+		
 		clearCanvas(uiCtx);
 		drawUI();
 	}
@@ -1339,7 +1354,7 @@ requirejs([
 		height = height/drawArrayDivision;
 		
 		// Send the data to the game server
-		client.sendCmd('draw', {width: width, height: height, drawArray: sendArray, accuracy: drawAccuracy});
+		client.sendCmd('draw', {width: width, height: height, drawArray: sendArray, accuracy: drawAccuracy, gamemode: gameState});
 	}
 
 });

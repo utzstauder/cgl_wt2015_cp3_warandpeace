@@ -1,15 +1,17 @@
 ﻿<Properties StartupItem="Assembly-CSharp.csproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/WordSpawner/WordSpawner.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/GameManager/GameManager.cs">
     <Files>
-      <File FileName="Assets/Scripts/GameManager/GameManager.cs" Line="338" Column="2" />
-      <File FileName="Assets/Scripts/GameManager/PlayerManager.cs" Line="108" Column="61" />
-      <File FileName="Assets/Scripts/Player/DrawInputPlayer.cs" Line="307" Column="3" />
-      <File FileName="Assets/HappyFunTimes/Scripts/HFTGamepad.cs" Line="408" Column="10" />
-      <File FileName="Assets/Scripts/GameManager/WordManager.cs" Line="90" Column="28" />
-      <File FileName="Assets/Scripts/WordSpawner/WordSpawner.cs" Line="290" Column="3" />
+      <File FileName="Assets/Scripts/GameManager/GameManager.cs" Line="361" Column="94" />
+      <File FileName="Assets/Scripts/GameManager/PlayerManager.cs" Line="112" Column="62" />
+      <File FileName="Assets/Scripts/Player/DrawInputPlayer.cs" Line="54" Column="44" />
+      <File FileName="Assets/HappyFunTimes/Scripts/HFTGamepad.cs" Line="390" Column="16" />
+      <File FileName="Assets/Scripts/WordSpawner/WordSpawner.cs" Line="487" Column="65" />
       <File FileName="Assets/Scripts/_general/Drawing.cs" Line="1" Column="1" />
-      <File FileName="Assets/Scripts/GameManager/AlphabetManager.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/GameManager/AlphabetManager.cs" Line="141" Column="111" />
+      <File FileName="Assets/Scripts/Word/Word.cs" Line="27" Column="3" />
+      <File FileName="Assets/Scripts/Word/Letter/Letter.cs" Line="28" Column="5" />
+      <File FileName="Assets/Scripts/_general/ScrollWithBackground.cs" Line="27" Column="20" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

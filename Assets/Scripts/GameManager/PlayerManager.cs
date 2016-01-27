@@ -51,11 +51,9 @@ public class PlayerManager : MonoBehaviour {
 
 	// This is called by every DrawInputPlayer class upon connecting to the game
 	public void AddPlayer(DrawInputPlayer _player){
-		/*DrawInputPlayer playerInList = GetPlayerReference(_player.GetSessionId());
+		m_players.Add(_player);
 
-		if (playerInList != null){
-			playerInList = _player;
-		} else */m_players.Add(_player);
+		GameManager.s_gameManager.HandlePlayerJoin(_player);
 
 		UpdateNumberOfPlayers();
 	}
@@ -102,20 +100,31 @@ public class PlayerManager : MonoBehaviour {
 	/*
 	 * Broadcasts a notification to every participating player
 	 */
-	public void BroadcastNotificationToCurrentRound(string _message){
+	public void BroadcastNotificationToCurrentRound(string _message, bool _dismissable, float _timeout){
 		List<DrawInputPlayer> playersInCurrentRound = GetPlayersInCurrentRound();
 
 		foreach (DrawInputPlayer player in playersInCurrentRound){
-			player.SendNotification(_message);
+			player.SendNotification(_message, _dismissable, _timeout);
+		}
+	}
+
+	/*
+	 * Broadcasts a notification to every member of team _teamId
+	 */
+	public void BroadcastNotificationToTeam(int _teamId, string _message, bool _dismissable, float _timeout){
+		List <DrawInputPlayer> playersInTeam = PlayerManager.s_playerManager.GetPlayersOfTeam(_teamId);
+
+		foreach (DrawInputPlayer player in playersInTeam){
+			player.SendNotification(_message, _dismissable, _timeout);
 		}
 	}
 
 	/*
 	 * Broadcasts a notification to every player
 	 */
-	public void BroadcastNotification(string _message){
+	public void BroadcastNotification(string _message, bool _dismissable, float _timeout){
 		foreach (DrawInputPlayer player in m_players){
-			player.SendNotification(_message);
+			player.SendNotification(_message, _dismissable, _timeout);
 		}
 	}
 
@@ -246,6 +255,14 @@ public class PlayerManager : MonoBehaviour {
 		
 	public int GetNumberOfPlayersInCurrentRound(){
 		return m_nPlayersCurrentRound;
+	}
+
+	public bool IsPlayerInCurrentRound(DrawInputPlayer _player){
+		List<DrawInputPlayer> playersInCurrentRound = GetPlayersInCurrentRound();
+
+		if (playersInCurrentRound.Contains(_player)) return true;
+
+		return false;
 	}
 
 	public int GetNumberOfPlayerAtBeginningOfCurrentRound(){

@@ -35,9 +35,6 @@ public class DrawInputPlayer : MonoBehaviour {
 	public float letterScale = .5f;
 
 	void Awake(){
-		// Add this player to the list of players
-		PlayerManager.s_playerManager.AddPlayer(this);
-
 		listOfDrawings = new List<int[]>();
 		listOfAccuracies = new List<float>();
 
@@ -53,6 +50,9 @@ public class DrawInputPlayer : MonoBehaviour {
 
 		SetName(m_gamepad.Name);
 		SetGameState(GameManager.s_gameManager.GetGameStateAsString(GameManager.s_gameManager.m_currentState));
+
+		// Add this player to the list of players
+		PlayerManager.s_playerManager.AddPlayer(this);
 	}
 
 	void OnDestroy(){
@@ -146,12 +146,20 @@ public class DrawInputPlayer : MonoBehaviour {
 							m_gamepad.drawAccuracy);
 	}
 
+	public GameManager.GameState GetCurrentGameState(){
+		if (m_gamepad.drawGamemode == "playing_free") return GameManager.GameState.playing_free;
+		if (m_gamepad.drawGamemode == "playing_word") return GameManager.GameState.playing_word;
+
+		return GameManager.GameState.initializing;
+	}
+
 	// TODO: deprecated
 	private void OnDrawingReceived(){
-		PushDrawing(m_gamepad.drawArray);
-		PushAccuracy(m_gamepad.drawAccuracy);
+		//PushDrawing(m_gamepad.drawArray);
+		//PushAccuracy(m_gamepad.drawAccuracy);
 		//Debug.Log("OnDrawingReceived");
 		GameManager.s_gameManager.OnPlayerReceivedDrawing(this);
+		PlaySound("Basic-select");
 	}
 
 	private void PushAccuracy(float _accuracy){
@@ -301,37 +309,16 @@ public class DrawInputPlayer : MonoBehaviour {
 	public void DrawLetterOnBackgroundFromString(string letter){
 		m_currentLetter = letter;
 		m_gamepad.SendLetter(letter);
+		PlaySound("newLetters");
 	}
 
-	public void SendNotification(string _message){
-		if (m_gamepad) m_gamepad.SendNotification(_message);
+	public void SendNotification(string _message, bool _dismissable, float _timeout){
+		m_gamepad.SendNotification(_message, _dismissable, _timeout);
+		PlaySound("Basic-confirm");
 	}
 
 	public void PlaySound(string filenameWithoutExtension){
 		m_soundPlayer.PlaySound(filenameWithoutExtension);
-	}
-
-	void OnGUI(){
-		if (m_debug){
-			if (GUI.Button(new Rect(10, 10, 120, 20), "Send letter")){
-				int randomLetter = UnityEngine.Random.Range(0, AlphabetManager.g_letters.Length-1);
-				DrawLetterOnBackground(randomLetter);
-			}
-			if (GUI.Button(new Rect(10, 30, 120, 20), "Pull drawing")){
-				PullDrawing();
-			}
-			if (m_gamepad.drawArray != null){
-				if (GUI.Button(new Rect(10, 50, 120, 20), "Spawn pixels")){
-					SpawnPixelsFromArray();
-				}
-				if (GUI.Button(new Rect(10, 70, 120, 20), "Delete letters")){
-					DeleteAllLettersFromScene();
-				}
-				if (GUI.Button(new Rect(10, 90, 120, 20), "Save to file")){
-					SaveDrawingToFile();
-				}
-			}
-		}
 	}
 		
 }
