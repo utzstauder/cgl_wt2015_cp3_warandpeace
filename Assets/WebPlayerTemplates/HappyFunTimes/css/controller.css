@@ -29,8 +29,17 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#font-preload{
+	display: none;
+}
+
+#hft-menu{
+	right: inherit !important;
+	left: 0.5em;
+}
+
 @font-face{
-	font-family: 'LetterFont';
+	font-family: LetterFont;
 	src: url('./fonts/OCRAStd.otf');
 }
  

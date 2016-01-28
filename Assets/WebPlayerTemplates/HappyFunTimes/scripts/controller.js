@@ -628,6 +628,7 @@ requirejs([
 	// UI buttons
 	var buttonClear = button("clear", 0, (uiCanvas.height - uiCanvas.height/10), (uiCanvas.width / 2), uiCanvas.height/10);
 	var buttonSend = button("send", (uiCanvas.width / 2), (uiCanvas.height - uiCanvas.height/10), (uiCanvas.width / 2), uiCanvas.height/10);
+	var buttonQuit = button('X', (uiCanvas.width - 50), 10, 40, 40);
 
 	// Check for device motion
 	if (window.DeviceMotionEvent || window.DeviceMotion){
@@ -674,6 +675,7 @@ requirejs([
 
 		buttonClear = button("clear", 0, (uiCanvas.height - uiCanvas.height/10), (uiCanvas.width / 2), uiCanvas.height/10);
 		buttonSend = button("send", (uiCanvas.width / 2), (uiCanvas.height - uiCanvas.height/10), (uiCanvas.width / 2), uiCanvas.height/10);
+		buttonQuit = button('X', (uiCanvas.width - 50), 10, 40, 40);
 
 		redrawAll();
 	}
@@ -839,6 +841,8 @@ requirejs([
 					buttonClearPressed();
 				} else if (buttonCollision(buttonSend, event.touches[0].pageX, event.touches[0].pageY)){
 					buttonSendPressed();
+				} else if (buttonCollision(buttonQuit, event.touches[0].pageX, event.touches[0].pageY)){
+					buttonQuitPressed();
 				} else{
 					if (drawingEnabled) drawTouchStart(event);
 				}
@@ -865,6 +869,8 @@ requirejs([
 					buttonClearPressed();
 				} else if (buttonCollision(buttonSend, event.pageX, event.pageY)){
 					buttonSendPressed();
+				} else if (buttonCollision(buttonQuit, event.pageX, event.pageY)){
+					buttonQuitPressed();
 				} else{
 					if (drawingEnabled) drawMouseDown(event);
 				}
@@ -1039,6 +1045,7 @@ requirejs([
 		} else {
 			drawButton(buttonClear);
 			drawButton(buttonSend);
+			drawButton(buttonQuit);
 		}
 	}
 
@@ -1067,6 +1074,11 @@ requirejs([
 			sendDrawArray(defaultAccuracy);
 			clearCanvas(ctx);
 		}
+	}
+	
+	// is called when buttonQuit is pressed
+	function buttonQuitPressed(){
+		window.open("https://docs.google.com/forms/d/1DUZs3-u70XKN4UzRwLdavks2_PsPnbGpu0_gVTBcvS8/viewform","_self");
 	}
 
 	// use this to check if a button was pressed
@@ -1312,7 +1324,7 @@ requirejs([
 		
 		_string = _string.toUpperCase();
 		
-		bgCtx.font = bgCtx.canvas.height * 0.75 + "px monospace";
+		bgCtx.font = bgCtx.canvas.height * 0.75 + "px LetterFont";
 		bgCtx.fillStyle = "white";
 		bgCtx.textBaseline = "middle";
 		bgCtx.textAlign = "center";

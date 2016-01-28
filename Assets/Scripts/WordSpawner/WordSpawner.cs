@@ -25,7 +25,8 @@ public class WordSpawner : MonoBehaviour {
 
 	// the drawing queue
 	private List<Drawing> m_drawingQueue;
-	private List<int> m_teamSubmissionOrder;
+	private List<int> m_teamSubmissionOrder;	// team ids in order of completion
+	private List<string> m_wordList;			// index is the team id
 
 	public float m_timeUntilNextDrawingInFreeMode = 2.0f;
 
@@ -36,6 +37,7 @@ public class WordSpawner : MonoBehaviour {
 	void Awake(){
 		m_drawingQueue = new List<Drawing>();
 		m_teamSubmissionOrder = new List<int>();
+		m_wordList = new List<string>();
 	}
 
 	// Use this for initialization
@@ -133,9 +135,45 @@ public class WordSpawner : MonoBehaviour {
 		m_drawingQueue.Add(_drawing);
 	}
 
+	/*
+	 * Clears all queues/lists
+	 */
 	public void EmptyQueue(){
 		m_drawingQueue.Clear();
 		m_teamSubmissionOrder.Clear();
+		m_wordList.Clear();
+	}
+
+	public void AddWordToList(string _word){
+		//Debug.Log("Adding " + _word + " to list.");
+		m_wordList.Add(_word);
+		//Debug.Log("Size: " + m_wordList.Count);
+	}
+
+	public string GetWordFromList(int _teamId){
+		//Debug.Log("Getting word with index " + _teamId);
+		return m_wordList[_teamId];
+	}
+
+	/*
+	 * Returns true if the order of letters was correct
+	 */
+	public bool IsOrderCorrect(int _teamId){
+		//Debug.Log("TeamID: " + _teamId);
+		//string word = GetWordFromList(_teamId);
+		string submittedDrawingsAsString = "";
+
+		foreach (Drawing drawing in m_drawingQueue){
+			if (drawing.teamId == (_teamId+1)){
+				//Debug.Log("Drawing found");
+				submittedDrawingsAsString = submittedDrawingsAsString + PlayerManager.s_playerManager.GetPlayerReference(drawing.playerId).GetCurrentLetter();
+			}
+		}
+
+		//Debug.Log(word + "==" + submittedDrawingsAsString);
+
+		//return (word == submittedDrawingsAsString);
+		return (WordManager.s_wordManager.CompareStringWithDictionary(submittedDrawingsAsString));
 	}
 
 	public bool IsQueueFull(){
@@ -355,7 +393,7 @@ public class WordSpawner : MonoBehaviour {
 		StartCoroutine(SpawnWordFromStringCoroutine(_word));
 	}
 
-	private IEnumerator SpawnWordFromStringCoroutine(string _word){
+	public IEnumerator SpawnWordFromStringCoroutine(string _word){
 		// convert to lower case
 		_word = _word.ToLower();
 
@@ -488,7 +526,7 @@ public class WordSpawner : MonoBehaviour {
 			for (int y = 0; y < _drawing.height; y += m_arrayDivisionFactor){
 				for (int x = 0; x < _drawing.width; x += m_arrayDivisionFactor){
 					if (_drawing.drawing[_drawing.width*y + x] > 0){
-						position = transform.position + new Vector3((x * _drawing.gap) - (_drawing.width / 2 * _drawing.gap), (_drawing.height / 2 * _drawing.gap) - (y * _drawing.gap), 0) * m_letterScale;
+						position = transform.position + new Vector3((x * _drawing.gap)/* - (_drawing.width / 2 * _drawing.gap)*/, (_drawing.height / 2 * _drawing.gap) - (y * _drawing.gap), 0) * m_letterScale;
 						LetterPixel pixel = spawnLetterPixel(position, m_letterScale * m_arrayDivisionFactor, color, _drawing.accuracy);
 						if (letter) {
 							pixel.transform.SetParent(letter.transform);
@@ -523,7 +561,7 @@ public class WordSpawner : MonoBehaviour {
 		for (int y = 0; y < drawing.height; y += m_arrayDivisionFactor){
 			for (int x = 0; x < drawing.width; x += m_arrayDivisionFactor){
 				if (drawing.drawing[drawing.width*y + x] > 0){
-					position = transform.position + new Vector3((x * drawing.gap) - (drawing.width / 2 * drawing.gap), (drawing.height / 2 * drawing.gap) - (y * drawing.gap), 0) * m_letterScale;
+					position = transform.position + new Vector3((x * drawing.gap) /*- (drawing.width / 2 * drawing.gap)*/, (drawing.height / 2 * drawing.gap) - (y * drawing.gap), 0) * m_letterScale;
 					LetterPixel pixel = spawnLetterPixel(position, m_letterScale * m_arrayDivisionFactor, color, drawing.accuracy);
 					if (letter) {
 						pixel.transform.SetParent(letter.transform);

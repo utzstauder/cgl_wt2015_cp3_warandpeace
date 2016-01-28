@@ -47,7 +47,9 @@ public class GameManager : MonoBehaviour {
 	public string m_notificationWordModeWaitForEndOfRound = "Please wait until the next round starts.";
 	public string m_notificationWordModeWaitForRestOfTeam = "Awesome drawing! Now you just have to wait for your team to finish. Your accuracy was ";
 	public string m_notificationWordModeWaitForOtherTeams = "Nicely done! The other teams aren't quite ready yet.";
-
+	public string m_notificationGamePaused = "GAME PAUSED";
+	public string m_notificationGameResumed = "GAME RESUMED";
+	public string m_notificationInitializing = "Welcome to DRAWNES! Please wait until the game starts.";
 	// Use this for initialization
 	void Awake () {
 		if (s_gameManager != null){
@@ -65,6 +67,8 @@ public class GameManager : MonoBehaviour {
 
 		PlayerManager.OnPlayerJoin += OnPlayerJoin;
 		PlayerManager.OnPlayerLeave += OnPlayerLeave;
+
+		PlayerManager.s_playerManager.BroadcastNotification(m_notificationInitializing, false, 0);
 	}
 
 	void OnDestroy(){
@@ -74,15 +78,18 @@ public class GameManager : MonoBehaviour {
 
 	void OnApplicationQuit(){
 		ChangeGameState(GameState.end);
+		if(!m_debug) Application.OpenURL("https://docs.google.com/forms/d/1DUZs3-u70XKN4UzRwLdavks2_PsPnbGpu0_gVTBcvS8/viewform");
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		if (Input.GetKeyDown(KeyCode.Escape)){
 			if (m_currentState == GameState.paused){
+				PlayerManager.s_playerManager.BroadcastNotification(m_notificationGameResumed, true, 0);
 				ChangeGameState(m_previousState);
 			} else {
 				ChangeGameState(GameState.paused);
+				PlayerManager.s_playerManager.BroadcastNotification(m_notificationGamePaused, false, 0);
 			}
 		}
 
@@ -239,6 +246,9 @@ public class GameManager : MonoBehaviour {
 					alreadySpawned[i] = false;
 				}
 
+				// empty queue
+				m_wordSpawner.EmptyQueue();
+
 				// send letter templates to player clients / teams
 				for (int i = 1; i <= numberOfTeams; i++){
 					// get a list of players of team i
@@ -247,6 +257,9 @@ public class GameManager : MonoBehaviour {
 					// get a random word of length = number of players in team i
 					string word = WordManager.s_wordManager.GetRandomWord(playersInCurrentTeam.Count);
 
+					// add word to list
+					m_wordSpawner.AddWordToList(word);
+
 					// distribute the letters to the team members randomly
 					playersInCurrentTeam.Shuffle();
 
@@ -254,9 +267,6 @@ public class GameManager : MonoBehaviour {
 						playersInCurrentTeam[c].DrawLetterOnBackgroundFromString(word[c].ToString());
 					}
 				}
-
-				// empty queue
-				m_wordSpawner.EmptyQueue();
 
 				// set flag for "round started"
 				m_roundStarted = true;
@@ -270,6 +280,15 @@ public class GameManager : MonoBehaviour {
 						if (m_wordSpawner.IsTeamReady(t) && !alreadySpawned[t-1]){
 							alreadySpawned[t-1] = true;
 							Debug.Log("Team " + t + " is ready!");
+
+							// check for correct order
+							if (m_wordSpawner.IsOrderCorrect(t-1)){
+								// correct order
+								Debug.Log("Correct order! :-)");
+							} else {
+								// incorrect order
+								Debug.Log("Incorrect order! :-(");
+							}
 
 							if (numberOfTeams > 1){
 								// send notification to entire team
@@ -356,9 +375,9 @@ public class GameManager : MonoBehaviour {
 			if (PlayerManager.s_playerManager.GetNumberOfPlayers() <= 0){
 				Debug.Log("screensaver is running...");
 
-				m_wordSpawner.SpawnWordFromString(m_screensaverWords[m_screensaverWordIndex]);
+				yield return  m_wordSpawner.StartCoroutine(m_wordSpawner.SpawnWordFromStringCoroutine(m_screensaverWords[m_screensaverWordIndex]));
 
-				yield return new WaitForSeconds((float)(m_screensaverWords[m_screensaverWordIndex].Length));
+				yield return new WaitForSeconds((float)(m_screensaverWords[m_screensaverWordIndex].Length / 2));
 
 				m_screensaverWordIndex = (m_screensaverWordIndex+1)%m_screensaverWords.Length;
 			} else {
@@ -382,6 +401,10 @@ public class GameManager : MonoBehaviour {
 			_player.SendNotification(m_notificationWordModeWaitForEndOfRound, false, 0);
 		} else if (m_roundStarted && m_currentState == GameState.playing_free){
 			_player.SendNotification(m_notificationFreeMode, true, 0);
+		} else if (m_currentState == GameState.initializing){
+			PlayerManager.s_playerManager.BroadcastNotification(m_notificationInitializing, false, 0);
+		} else if (m_currentState == GameState.paused){
+			PlayerManager.s_playerManager.BroadcastNotification(m_notificationGamePaused, false, 0);
 		}
 	}
 

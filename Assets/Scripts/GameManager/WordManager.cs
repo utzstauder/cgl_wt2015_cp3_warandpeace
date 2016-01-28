@@ -21,8 +21,8 @@ public class WordManager : MonoBehaviour {
 			s_wordManager = this;
 		}
 
-		m_wordlist = ReadWordsFromCSV();
-
+		//m_wordlist = ReadWordsFromCSV();
+		m_wordlist = ReadWordsFromTXT();
 		//Debug.Log(GetRandomWord(Random.Range(2, 8)));
 	}
 	
@@ -69,6 +69,49 @@ public class WordManager : MonoBehaviour {
 		}
 
 		return wordlist;
+	}
+
+	/*
+	 * This reads from a TXT file and fills a string-array-list thing
+	 * 
+	 * Right now it only supports words that contain 2-8 letters
+	 * everything else will not be considered
+	 * 
+	 * wordlist[0] == two letters
+	 * wordlist[1] == three letters
+	 * ...
+	 * wordlist[6] == eight letters
+	 */
+	private List<string>[] ReadWordsFromTXT(){
+		List<string>[] wordlist = new List<string>[7];
+		for (int i = 0; i < wordlist.Length; i++){
+			wordlist[i] = new List<string>();
+		}
+
+		List<string> data = TXTReader.Read ("wordlist");
+
+		for (int i = 0; i < data.Count; i++){
+			if (data[i].Length >= 2 && data[i].Length <= 8){
+				wordlist[data[i].Length - 2].Add(data[i]);
+			}
+		}
+
+		return wordlist;
+	}
+
+
+	/*
+	 * returns true if the string _word exists in m_wordlist
+	 */
+	public bool CompareStringWithDictionary(string _word){
+		foreach (string wordInDictionary in m_wordlist[_word.Length - 2]){
+			if (wordInDictionary == _word){
+				Debug.Log("Word '" + _word + "' found in dictionary!");
+				return true;
+			}
+		}
+		Debug.Log("Word '" + _word + "' not found in dictionary!");
+		return false;
 	}
 		
 	public int[] GetRandomWordAsIntArray(int _length){
