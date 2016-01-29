@@ -12,8 +12,9 @@ public class PlayerManager : MonoBehaviour {
 	public static PlayerManager s_playerManager;	// Static reference to this instance
 
 	public int m_minPlayersPerTeam = 3;
+	private int m_maxPlayersPerTeam = 8;
 	[Range(3, 8)]
-	public int m_maxPlayersPerTeam = 4; 
+	public int m_maxPlayersPerTeamInitial = 8;
 
 	private List<DrawInputPlayer> m_players;		// A generic list of all the players that are currently connected to the game
 	private int m_nPlayers = 0;						// The number of players currently connected to the game
@@ -128,11 +129,17 @@ public class PlayerManager : MonoBehaviour {
 		}
 	}
 
+	private void ResetMaxPlayersPerTeam(){
+		m_maxPlayersPerTeam = m_maxPlayersPerTeamInitial;
+	}
+
 	/*
 	 * Divides all players up into x teams
 	 * depending on the number of currently connected players
 	 */
 	public void AssignPlayersToTeams(){
+		ResetMaxPlayersPerTeam();
+
 		int numberOfTeams = ((m_nPlayersCurrentRound - 1) / m_maxPlayersPerTeam) + 1;
 		int teamCounter = 0%numberOfTeams + 1;
 

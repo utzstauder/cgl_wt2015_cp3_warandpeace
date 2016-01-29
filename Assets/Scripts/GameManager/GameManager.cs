@@ -60,7 +60,10 @@ public class GameManager : MonoBehaviour {
 	public string m_notificationWordMode = "You are playing WORD MODE! Communicate with the other players of your color and draw the letters in the correct order!";
 	public string m_notificationWordModeWaitForEndOfRound = "Please wait until the next round starts.";
 	public string m_notificationWordModeWaitForRestOfTeam = "Awesome drawing! Now you just have to wait for your team to finish. Your accuracy was ";
-	public string m_notificationWordModeWaitForOtherTeams = "Nicely done! The other teams aren't quite ready yet.";
+	public string m_notificationWordModeCorrectOrder = "Great! You drew your word in the correct order!";
+	public string m_notificationWordModeIncorrectOrder = "Oh my! Unfortunately the order was incorrect!";
+	public string m_notificationWordModeCorrectOrderWaitForOtherTeams = "Great! You drew your word in the correct order! But the other players aren't quite ready yet.";
+	public string m_notificationWordModeIncorrectOrderWaitForOtherTeams = "Oh my! Unfortunately the order was incorrect! But the other players aren't quite ready yet.";
 	public string m_notificationGamePaused = "GAME PAUSED";
 	public string m_notificationGameResumed = "GAME RESUMED";
 	public string m_notificationInitializing = "Welcome to DRAWNES! Please wait until the game starts.";
@@ -317,16 +320,27 @@ public class GameManager : MonoBehaviour {
 							if (m_wordSpawner.IsOrderCorrect(t-1)){
 								// correct order
 								Debug.Log("Correct order! :-)");
+
+								if (numberOfTeams > 1){
+									// send notification to entire team
+									PlayerManager.s_playerManager.BroadcastNotificationToTeam(t, m_notificationWordModeCorrectOrderWaitForOtherTeams, false, 0);
+								} else {
+									PlayerManager.s_playerManager.BroadcastNotificationToTeam(t, m_notificationWordModeCorrectOrder, false, 0);
+								}
+
 							} else {
 								// incorrect order
 								Debug.Log("Incorrect order! :-(");
 								m_wordSpawner.SpawnPowerUpBomb();
+								if (numberOfTeams > 1){
+									// send notification to entire team
+									PlayerManager.s_playerManager.BroadcastNotificationToTeam(t, m_notificationWordModeIncorrectOrderWaitForOtherTeams, false, 0);
+								} else {
+									PlayerManager.s_playerManager.BroadcastNotificationToTeam(t, m_notificationWordModeIncorrectOrder, false, 0);
+								}
 							}
 
-							if (numberOfTeams > 1){
-								// send notification to entire team
-								PlayerManager.s_playerManager.BroadcastNotificationToTeam(t, m_notificationWordModeWaitForOtherTeams, false, 0);
-							}
+
 
 							// set the time to wait after end of word mode
 							// will automatically be the length of the word that was spawned last (in seconds)

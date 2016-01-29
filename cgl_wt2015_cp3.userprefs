@@ -1,16 +1,16 @@
 ﻿<Properties StartupItem="Assembly-CSharp.csproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/GameManager/AlphabetManager.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/GameManager/PlayerManager.cs">
     <Files>
-      <File FileName="Assets/Scripts/GameManager/GameManager.cs" Line="333" Column="71" />
-      <File FileName="Assets/Scripts/GameManager/PlayerManager.cs" Line="1" Column="1" />
-      <File FileName="Assets/Scripts/WordSpawner/WordSpawner.cs" Line="184" Column="85" />
+      <File FileName="Assets/Scripts/GameManager/GameManager.cs" Line="230" Column="1" />
+      <File FileName="Assets/Scripts/GameManager/PlayerManager.cs" Line="14" Column="8" />
+      <File FileName="Assets/Scripts/WordSpawner/WordSpawner.cs" Line="1" Column="1" />
       <File FileName="Assets/Scripts/_general/MeshRendererParallax.cs" Line="1" Column="1" />
       <File FileName="Assets/Scripts/Drone/Drone.cs" Line="1" Column="1" />
       <File FileName="Assets/Scripts/Drone/DroneRocket/DroneRocket.cs" Line="1" Column="1" />
       <File FileName="Assets/Scripts/Drone/DroneRocket/Detonation.cs" Line="1" Column="1" />
       <File FileName="Assets/Scripts/Drone/DroneInput.cs" Line="1" Column="1" />
-      <File FileName="Assets/Scripts/GameManager/AlphabetManager.cs" Line="141" Column="137" />
+      <File FileName="Assets/Scripts/GameManager/AlphabetManager.cs" Line="1" Column="1" />
       <File FileName="Assets/Scripts/GameManager/ArtstyleManager.cs" Line="1" Column="1" />
       <File FileName="Assets/Scripts/Word/Letter/LetterPixel/LetterPixel.cs" Line="1" Column="1" />
       <File FileName="Assets/Scripts/_general/ArtstyleSwitcherGameObjects.cs" Line="1" Column="1" />
