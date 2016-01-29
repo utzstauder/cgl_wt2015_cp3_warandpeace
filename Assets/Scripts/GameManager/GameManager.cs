@@ -14,6 +14,11 @@ public class GameManager : MonoBehaviour {
 	public GameState m_currentState;
 	private GameState m_previousState;
 	private int m_score = 0;
+	private int m_highscore = 0;
+	private string m_scoreText = "SCORE:      ";
+
+	private bool m_pixelPoolReady = false;
+	public GameObject m_titleScreen;
 
 	// Screensaver
 	public string[] m_screensaverWords = {"Drawnes"};
@@ -23,12 +28,14 @@ public class GameManager : MonoBehaviour {
 	// References
 	public static GameManager s_gameManager;
 	public WordSpawner m_wordSpawner;
+	public Drone m_drone;
 
 	// Artstyle change variables
 	public bool m_artstyleDefaultMode = true;
 	private bool m_artstyleCooldownRunning = false;
 	private float m_timeUntilReset = 1.0f;
 	private float m_currentArtstyleTimer = 0.0f;
+	public int m_killsForArtstyleChange = 50;
 
 	// Menu variables
 	public int m_menuButtonWidth = 160;
@@ -36,9 +43,12 @@ public class GameManager : MonoBehaviour {
 	public int m_menuButtonSpacing = 40;
 
 	// Game loop variables
+	[Range(0.0f, 1.0f)]
+	public float m_wordModeChance = 0.5f;
 	private bool m_roundStarted = false;
 	private float m_roundTimer = 0;
-	public float m_freeModeRoundTime = 20.0f;
+	private float m_freeModeRoundTime = 20.0f;
+	public float m_secondsPerPlayerInFreeMode = 3.0f;
 	public float m_timeUntilNextRound = 3.0f;
 
 	// Notification texts
@@ -63,7 +73,10 @@ public class GameManager : MonoBehaviour {
 	}
 
 	void Start(){
+		if (!m_titleScreen) m_titleScreen = GameObject.Find("TitleScreen");
+
 		m_wordSpawner = GameObject.FindGameObjectsWithTag("WordSpawner")[0].GetComponent<WordSpawner>();
+		m_drone = GameObject.Find("Drone").GetComponent<Drone>();
 
 		PlayerManager.OnPlayerJoin += OnPlayerJoin;
 		PlayerManager.OnPlayerLeave += OnPlayerLeave;
@@ -83,7 +96,7 @@ public class GameManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		if (Input.GetKeyDown(KeyCode.Escape)){
+		if (Input.GetKeyDown(KeyCode.Escape) && (m_currentState != GameState.initializing || m_currentState == GameState.end)){
 			if (m_currentState == GameState.paused){
 				PlayerManager.s_playerManager.BroadcastNotification(m_notificationGameResumed, true, 0);
 				ChangeGameState(m_previousState);
@@ -93,13 +106,16 @@ public class GameManager : MonoBehaviour {
 			}
 		}
 
-		// Debug safety; see what I did there? ;-)
-		if (Input.GetKey(KeyCode.R) && Input.GetKey(KeyCode.E) && Input.GetKey(KeyCode.S) && Input.GetKey(KeyCode.T)){
-			ResetGame();
+		if (Input.GetKeyDown(KeyCode.Space) && m_currentState == GameState.initializing && m_pixelPoolReady){
+			StartGame();
 		}
 
 		//Debug.Log(m_currentArtstyleTimer + " / " + m_timeUntilReset + " => current artstyle: " + ArtstyleManager.s_artstyleManager.m_currentStyle);
 		//Debug.Log(m_timeUntilReset - m_currentArtstyleTimer);
+	}
+
+	public void SetPixelPoolReady(){
+		m_pixelPoolReady = true;
 	}
 
 	/*
@@ -121,6 +137,10 @@ public class GameManager : MonoBehaviour {
 	}
 
 	private void ChangeGameState(GameState _targetState){
+		if (_targetState == GameState.initializing || _targetState == GameState.paused || _targetState == GameState.end){
+			m_titleScreen.SetActive(true);
+		} else m_titleScreen.SetActive(false);
+
 		m_previousState = m_currentState;
 		m_currentState = _targetState;
 
@@ -143,7 +163,7 @@ public class GameManager : MonoBehaviour {
 	 * Returns either free or word mode
 	 */
 	private GameState GetRandomGameMode(){
-		if (Random.Range(0, 1) == 0) return GameState.playing_word;
+		if (Random.Range(0.0f, 1.0f) < m_wordModeChance) return GameState.playing_word;
 
 		return GameState.playing_free;
 	}
@@ -288,6 +308,7 @@ public class GameManager : MonoBehaviour {
 							} else {
 								// incorrect order
 								Debug.Log("Incorrect order! :-(");
+								m_wordSpawner.SpawnPowerUpBomb();
 							}
 
 							if (numberOfTeams > 1){
@@ -331,6 +352,8 @@ public class GameManager : MonoBehaviour {
 			
 				// start spawning incoming drawings
 				//m_wordSpawner.SpawnDrawingsFromQueue();
+
+				m_freeModeRoundTime = PlayerManager.s_playerManager.GetNumberOfPlayerAtBeginningOfCurrentRound() * m_secondsPerPlayerInFreeMode;
 
 				// reset the round timer
 				m_roundTimer = 0;
@@ -496,6 +519,26 @@ public class GameManager : MonoBehaviour {
 	public void AddScore(int _score){
 		//Debug.Log("adding score " + _score);
 		m_score += _score;
+
+		if (m_score%m_killsForArtstyleChange == 0){
+			SwitchArtstyle();
+		}
+
+		if (m_score%m_killsForArtstyleChange == m_killsForArtstyleChange/2){
+			m_wordSpawner.SpawnPowerUpBomb();
+		}
+
+		if (m_score > m_highscore){
+			m_highscore = m_score;
+		}
+	}
+
+	public void ResetScore(){
+		m_score = 0;
+	}
+
+	public void SwitchArtstyle(){
+		ArtstyleManager.s_artstyleManager.Switch();
 	}
 
 	public void TriggerArtstyleChange(float _time){
@@ -513,6 +556,7 @@ public class GameManager : MonoBehaviour {
 		m_artstyleCooldownRunning = true;
 
 		ArtstyleManager.s_artstyleManager.SetArtstyle(ArtstyleManager.Style.realistic);
+		m_scoreText = "CASUALTIES: ";
 
 		while (m_currentArtstyleTimer < m_timeUntilReset){
 			m_currentArtstyleTimer += Time.deltaTime;
@@ -520,6 +564,7 @@ public class GameManager : MonoBehaviour {
 		}
 			
 		ArtstyleManager.s_artstyleManager.SetArtstyle(ArtstyleManager.Style.arcade);
+		m_scoreText = "SCORE:      ";
 
 		m_timeUntilReset = 0;
 		m_currentArtstyleTimer = 0;
@@ -554,52 +599,73 @@ public class GameManager : MonoBehaviour {
 				}
 			}*/
 			if (IsPlaying() && m_debug){
-				if (GUI.Button(new Rect(10, 30, 120, 20), "ARCADE MODE")){
+				if (GUI.Button(new Rect(10, 50, 120, 20), "ARCADE MODE")){
 					m_artstyleDefaultMode = false;
 					ArtstyleManager.s_artstyleManager.SetArtstyle(ArtstyleManager.Style.arcade);
 				}
-				if (GUI.Button(new Rect(140, 30, 120, 20), "REALISTIC MODE")){
+				if (GUI.Button(new Rect(140, 50, 120, 20), "REALISTIC MODE")){
 					m_artstyleDefaultMode = false;
 					ArtstyleManager.s_artstyleManager.SetArtstyle(ArtstyleManager.Style.realistic);
 				}
-				if (GUI.Button(new Rect(270, 30, 120, 20), "DEFAULT MODE")){
+				if (GUI.Button(new Rect(270, 50, 120, 20), "DEFAULT MODE")){
 					m_artstyleDefaultMode = true;
 					ArtstyleManager.s_artstyleManager.SetArtstyle(ArtstyleManager.Style.arcade);
 				}
 			}
 		}
 
-		if (m_currentState == GameState.initializing || m_currentState == GameState.paused){
+		if (m_currentState == GameState.initializing && m_pixelPoolReady){
+			if (GUI.Button(new Rect(Screen.width/2 - m_menuButtonWidth/2, Screen.height*2/3 + m_menuButtonSpacing , m_menuButtonWidth, m_menuButtonHeight * 3), "START GAME")){
+				StartGame();
+			}
+		} else if (m_currentState == GameState.initializing && !m_pixelPoolReady){
+			GUI.Label(new Rect(Screen.width/2 - m_menuButtonWidth/2, Screen.height*2/3 + m_menuButtonSpacing , m_menuButtonWidth, m_menuButtonHeight * 3), "LOADING...");
+		}
+
+		if (m_currentState == GameState.paused){
 
 			// Menu
 			GUILayout.BeginVertical();
 
-			if (GUI.Button(new Rect(Screen.width/2 - 50, Screen.height/2 - m_menuButtonSpacing * 1.5f , m_menuButtonWidth, m_menuButtonHeight * 3), "START GAME")){
-				StartGame();
-				//ChangeGameState(GameState.playing_word);
+			if (GUI.Button(new Rect(Screen.width/2 - m_menuButtonWidth/2, Screen.height*2/3 + m_menuButtonSpacing * 1, m_menuButtonWidth, m_menuButtonHeight), "RESUME GAME")){
+				ChangeGameState(m_previousState);
+				PlayerManager.s_playerManager.BroadcastNotification(m_notificationGameResumed, true, 0);
 			}
 
-			/*if (GUI.Button(new Rect(Screen.width/2 - 50, Screen.height/2 - m_menuButtonSpacing/2, m_menuButtonWidth, m_menuButtonHeight), "FREE MODE")){
-				ChangeGameState(GameState.playing_free);
-			}*/
+			if (GUI.Button(new Rect(Screen.width/2 - m_menuButtonWidth/2, Screen.height*2/3 + m_menuButtonSpacing * 2, m_menuButtonWidth, m_menuButtonHeight), "RESTART GAME")){
+				StartGame();
+			}
 
-			if (GUI.Button(new Rect(Screen.width/2 - 50, Screen.height/2 + m_menuButtonSpacing/2, m_menuButtonWidth, m_menuButtonHeight), "OPEN QUESTIONAIRE")){
+			if (GUI.Button(new Rect(Screen.width/2 - m_menuButtonWidth/2, Screen.height*2/3 + m_menuButtonSpacing * 3, m_menuButtonWidth, m_menuButtonHeight), "OPEN QUESTIONAIRE")){
 				Application.OpenURL("https://docs.google.com/forms/d/1DUZs3-u70XKN4UzRwLdavks2_PsPnbGpu0_gVTBcvS8/viewform");
 			}
 
-			if (GUI.Button(new Rect(Screen.width/2 - 50, Screen.height/2 + m_menuButtonSpacing * 1.5f , m_menuButtonWidth, m_menuButtonHeight), "QUIT GAME")){
+			if (GUI.Button(new Rect(Screen.width/2 - m_menuButtonWidth/2, Screen.height*2/3 + m_menuButtonSpacing * 4 , m_menuButtonWidth, m_menuButtonHeight), "QUIT GAME")){
 				Application.Quit();
 			}
 
 			GUILayout.EndVertical();
 		}
 
-		if (ArtstyleManager.s_artstyleManager.GetCurrentStyle() == ArtstyleManager.Style.arcade){
-			GUI.Label(new Rect(20, 10, 300, 30), 	"SCORE:      " + m_score);
-		} else GUI.Label(new Rect(20, 10, 300, 30), "CASUALTIES: " + m_score);
+		if (IsPlaying()){
+			if (m_score >= m_highscore){
+				GUI.color = Color.red;
 
-		if (m_currentState == GameState.playing_free && m_roundStarted && m_roundTimer > 0){
-			GUI.Label(new Rect(20, Screen.height - 40, 300, 20), "TIME UNTIL NEXT ROUND: " + (m_freeModeRoundTime - m_roundTimer));
+			} else {
+				GUI.color = Color.yellow;
+			}
+			if (m_drone.IsInAutopilot()){
+				GUI.color = Color.blue;
+				GUI.Label(new Rect(20, 10, 300, 30), "AUTOPILOT");
+			} else GUI.Label(new Rect(20, 10, 300, 30), m_scoreText + m_score);
+
+			GUI.color = Color.white;
+
+			GUI.Label(new Rect(20, 30, 300, 30), 		"BOMBS:      " + m_drone.m_bombCount);
+
+			if (m_currentState == GameState.playing_free && m_roundStarted && m_roundTimer > 0){
+				GUI.Label(new Rect(20, Screen.height - 40, 300, 20), "TIME UNTIL NEXT ROUND: " + (m_freeModeRoundTime - m_roundTimer));
+			}
 		}
 	}
 }

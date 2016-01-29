@@ -44,7 +44,7 @@
 }
  
 html, body {
-    background: linear-gradient(
+   /* background: linear-gradient(
       to bottom,
       #54453F,
       #54453F 10%,
@@ -60,7 +60,12 @@ html, body {
       #FFF2D0 90%,
       #54453F 90%,
       #54453F
-    );
+    );*/
+	background-color: #343538;
+	background-image: url('../images/titlescreen_for_phone.png');
+	background-repeat: no-repeat;
+	background-size: 300px;
+	background-position: center center;
 }
 #buttons {
     position: absolute;

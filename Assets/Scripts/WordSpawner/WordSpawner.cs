@@ -34,6 +34,9 @@ public class WordSpawner : MonoBehaviour {
 	private List<LetterPixel> m_letterPixelPool;
 	public int m_initialPoolSize = 10000;
 
+	// powerups
+	public GameObject m_powerUpPrefabBomb;
+
 	void Awake(){
 		m_drawingQueue = new List<Drawing>();
 		m_teamSubmissionOrder = new List<int>();
@@ -62,6 +65,9 @@ public class WordSpawner : MonoBehaviour {
 			if (i%(_amount/10) == 0) yield return new WaitForSeconds(3.0f/10.0f);
 		}
 		Debug.Log("PixelPool filled");
+
+		// once the pool is filled, we can start the game
+		GameManager.s_gameManager.SetPixelPoolReady();
 	}
 
 	public void DeactivateAllPixelsInPool(){
@@ -82,6 +88,13 @@ public class WordSpawner : MonoBehaviour {
 
 	public float GetDeathX(){
 		return deathX;
+	}
+
+	/*
+	 * Spawns a power up
+	 */
+	public void SpawnPowerUpBomb(){
+		Instantiate(m_powerUpPrefabBomb, transform.position, Quaternion.identity);
 	}
 
 
@@ -535,10 +548,8 @@ public class WordSpawner : MonoBehaviour {
 						}
 					}
 				}
-
 				yield return new WaitForEndOfFrame();
 			}
-
 			if (letter.transform.childCount <= 0) Destroy(letter.gameObject);
 		}
 	}

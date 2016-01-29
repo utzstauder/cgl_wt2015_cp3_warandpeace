@@ -29,9 +29,10 @@ public class Drone : MonoBehaviour {
 	public DroneProjectile m_droneProjectilePrefab;
 	public GameObject m_droneProjectile;
 	private LineRenderer m_droneProjectileLineRenderer;
-	public GameObject m_droneRocketPrefab;
+	public GameObject m_droneBombPrefab;
 
-	public bool m_canFireRocket = false;
+	public bool m_canFireBomb = true;
+	public int m_bombCount = 0;
 
 	public float m_droneProjectileSpeed = 300.0f;
 	private Transform m_droneCannon;
@@ -42,6 +43,10 @@ public class Drone : MonoBehaviour {
 	public float m_projectileDeathX = 270.0f;
 
 	private bool m_shooting = false;
+
+	public float m_idleUntilReset = 10.0f;
+	private float m_idleTimer = 0;
+	private bool m_isInAutopilot = false;
 
 	// Use this for initialization
 	void Awake () {
@@ -130,8 +135,20 @@ public class Drone : MonoBehaviour {
 			m_droneProjectileLineRenderer.SetPosition(0, m_droneCannon.position);
 			m_droneProjectileLineRenderer.SetPosition(1, m_droneCrosshairKillzone.transform.position);
 
-			if (m_droneInput.GetFireAltPressed()){
+			if (m_droneInput.GetFireAltPressed() && m_canFireBomb && m_bombCount > 0){
 				ShootRocket();
+			}
+
+			// do we need to go into autopilot
+			if (m_droneInput.IsIdle()){
+				m_idleTimer += Time.deltaTime;
+			} else{
+				CancelAutopilot();
+				m_idleTimer = 0;
+			}
+
+			if (m_idleTimer >= m_idleUntilReset && !m_isInAutopilot){
+				GoIntoAutopilot();
 			}
 		}
 	}
@@ -173,9 +190,25 @@ public class Drone : MonoBehaviour {
 		*/
 	}
 
+	private void GoIntoAutopilot(){
+		m_isInAutopilot = true;
+		GameManager.s_gameManager.ResetScore();
+
+	}
+
+	private void CancelAutopilot(){
+		m_isInAutopilot = false;
+	}
+
+	public bool IsInAutopilot(){
+		return m_isInAutopilot;
+	}
+
 	private void ShootRocket(){
-		GameObject rocket = (GameObject) Instantiate(m_droneRocketPrefab, m_droneCannon.position, Quaternion.identity);
+		GameObject rocket = (GameObject) Instantiate(m_droneBombPrefab, m_droneCannon.position, Quaternion.identity);
 		rocket.GetComponent<DroneRocket>().Init(m_droneCrosshairKillzone.transform.position);
+
+		m_bombCount--;
 	}
 
 	private IEnumerator FireShot(){
@@ -212,6 +245,13 @@ public class Drone : MonoBehaviour {
 		m_droneSpreadOffset = Vector3.zero;
 
 		m_shooting = false;
+	}
+
+	void OnTriggerStay2D(Collider2D _other){
+		if (_other.gameObject.CompareTag("PowerUpBomb")){
+			Destroy(_other.gameObject);
+			m_bombCount++;
+		}
 	}
 
 	void OnDrawGizmosSelected(){

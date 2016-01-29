@@ -543,6 +543,11 @@ requirejs([
 	// +++++++++++++++++++++++++++++++++++
 	// initialization
 	
+	// idle timer check
+	var idleTimer = 0;
+	var idleTimeUntilQuit = 30;
+	window.setInterval(increaseIdleTimer, 1000);
+	
 	// Variables and references and stuff
 	var canvas = document.getElementById("drawCanvas");
 	var bgCanvas = document.getElementById("backgroundCanvas");
@@ -564,13 +569,11 @@ requirejs([
 	var drawArrayDivision = 4;
 	var defaultAccuracy = 0.5;
 	var accuracyThreshold = 0.75;
-
 	var isMouseDown = false;
 	
 	// letter variables
 	var letterScale = 4;
 	bgCtx.fillStyle = "black";
-	
 	var currentLetter = null;
 	var currentLetterWidth = null;
 	var currentLetterHeight = null;
@@ -582,7 +585,10 @@ requirejs([
 	var notificationTimeout = 0;
 	var notificationTimerFunction = null;
 	var notificationShowing = false;
-	var notificationText = "THIS IS A RANDOM NOTIFICATION!";
+	var notificationText = "";
+	//var imgTitlescreen = document.getElementById("titlescreen");
+
+	drawNotification();
 
 	// UI variables
 	var uiButtonBackground = "white";
@@ -591,17 +597,6 @@ requirejs([
 
 	// Add event listeners
 	window.addEventListener("resize", handleResize);
-	
-	/*canvas.addEventListener("touchmove", drawTouchMove, false);
-	canvas.addEventListener("touchend", drawTouchEnd, false);
-	canvas.addEventListener("touchstart", drawTouchStart, false);
-
-	canvas.addEventListener("mousedown", drawMouseDown, false);
-	canvas.addEventListener("mouseup", drawMouseUp, false);
-	canvas.addEventListener("mousemove", drawMouseMove, false);
-
-	uiCanvas.addEventListener("touchstart", uiTouchStart, false);
-	uiCanvas.addEventListener("mousedown", uiMouseDown, false);*/
 
 	inputCanvas.addEventListener("touchstart", inputTouchStart, false);
 	inputCanvas.addEventListener("touchend", inputTouchEnd, false);
@@ -649,6 +644,17 @@ requirejs([
 
 	// initialization end
 	// +++++++++++++++++++++++++++++++++++
+	
+	
+	// should be called every second
+	function increaseIdleTimer(){
+		idleTimer += 1;
+		
+		if (idleTimer >= idleTimeUntilQuit &&
+			notificationDismissable === true){
+			quitApplication();
+		}	
+	}
 	
 	function handleResize(event){
 		var lineWidthTmp = ctx.lineWidth;
@@ -846,18 +852,25 @@ requirejs([
 				} else{
 					if (drawingEnabled) drawTouchStart(event);
 				}
-
-
+		
+		// reset idleTimer upon input
+		idleTimer = 0;
 	}
 
 	function inputTouchEnd(event){
 		event.preventDefault();
 		if (drawingEnabled) drawTouchEnd(event);
+		
+		// reset idleTimer upon input
+		idleTimer = 0;
 	}
 
 	function inputTouchMove(event){
 		event.preventDefault();
 		if (drawingEnabled) drawTouchMove(event);
+		
+		// reset idleTimer upon input
+		idleTimer = 0;
 	}
 
 	function inputMouseDown(event){
@@ -874,17 +887,25 @@ requirejs([
 				} else{
 					if (drawingEnabled) drawMouseDown(event);
 				}
-
+		
+		// reset idleTimer upon input
+		idleTimer = 0;
 	}
 
 	function inputMouseUp(event){
 		event.preventDefault();
 		if (drawingEnabled) drawMouseUp(event);
+		
+		// reset idleTimer upon input
+		idleTimer = 0;
 	}
 
 	function inputMouseMove(event){
 		event.preventDefault();
 		if (drawingEnabled) drawMouseMove(event);
+		
+		// reset idleTimer upon input
+		idleTimer = 0;
 	}
 
 	// input canvas handling
@@ -1078,6 +1099,11 @@ requirejs([
 	
 	// is called when buttonQuit is pressed
 	function buttonQuitPressed(){
+		quitApplication();
+	}
+	
+	// Quits the application
+	function quitApplication(){
 		window.open("https://docs.google.com/forms/d/1DUZs3-u70XKN4UzRwLdavks2_PsPnbGpu0_gVTBcvS8/viewform","_self");
 	}
 
@@ -1105,6 +1131,9 @@ requirejs([
 		
 		//uiCtx.fillText(notificationText, uiCtx.canvas.width/2, uiCtx.canvas.height/2);
 		wrapText(uiCtx, notificationText, uiCtx.canvas.width/2, uiCtx.canvas.height*1/3, uiCtx.canvas.width*3/4, 30);
+		
+		// reset idleTimer
+		idleTimer = 0;
 	}
 	
 	// found this at: http://www.html5canvastutorials.com/tutorials/html5-canvas-wrap-text-tutorial/

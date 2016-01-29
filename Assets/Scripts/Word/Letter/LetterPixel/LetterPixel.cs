@@ -70,7 +70,7 @@ public class LetterPixel : MonoBehaviour {
 
 	public void ApplyDamage(int _damage){
 		currentHp -= _damage;
-		GameManager.s_gameManager.TriggerArtstyleChange(_damage * ArtstyleManager.s_artstyleManager.m_timeFactor);
+		//GameManager.s_gameManager.TriggerArtstyleChange(_damage * ArtstyleManager.s_artstyleManager.m_timeFactor);
 		CheckHP();
 	}
 
