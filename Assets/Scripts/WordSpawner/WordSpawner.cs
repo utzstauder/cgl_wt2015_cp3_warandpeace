@@ -179,7 +179,9 @@ public class WordSpawner : MonoBehaviour {
 		foreach (Drawing drawing in m_drawingQueue){
 			if (drawing.teamId == (_teamId+1)){
 				//Debug.Log("Drawing found");
-				submittedDrawingsAsString = submittedDrawingsAsString + PlayerManager.s_playerManager.GetPlayerReference(drawing.playerId).GetCurrentLetter();
+				if (PlayerManager.s_playerManager.GetPlayerReference(drawing.playerId)){
+					submittedDrawingsAsString = submittedDrawingsAsString + PlayerManager.s_playerManager.GetPlayerReference(drawing.playerId).GetCurrentLetter();
+				} else submittedDrawingsAsString = submittedDrawingsAsString + drawing.playerId;
 			}
 		}
 
@@ -234,20 +236,6 @@ public class WordSpawner : MonoBehaviour {
 		for(int d = 0; d < m_drawingQueue.Count; d++){
 			//Debug.Log(m_drawingQueue[d].teamId + "==" + _teamId);
 			if (m_drawingQueue[d].teamId == _teamId){
-
-				/*
-				Letter letter = SpawnLetter(m_drawingQueue[d], transform.position);
-				letterPositionX = transform.position.x + (d * word.m_wordSpacing);
-				letterPosition = new Vector3(letterPositionX, transform.position.y, 0);
-				letter.transform.position = letterPosition;
-
-				if (letter != null){
-					letter.transform.parent = word.transform;
-				}
-
-				yield return new WaitForSeconds(.33f);
-				*/
-
 				yield return StartCoroutine(SpawnLetterCoroutine(m_drawingQueue[d], word.transform));
 			}
 		}

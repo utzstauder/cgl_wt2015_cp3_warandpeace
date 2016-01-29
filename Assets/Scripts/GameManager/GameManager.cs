@@ -24,6 +24,7 @@ public class GameManager : MonoBehaviour {
 	public string[] m_screensaverWords = {"Drawnes"};
 	public float m_timeInBetweenWords = 20.0f;
 	private int m_screensaverWordIndex = 0;
+	private bool m_screensaverIsRunning = false;
 
 	// References
 	public static GameManager s_gameManager;
@@ -35,7 +36,9 @@ public class GameManager : MonoBehaviour {
 	private bool m_artstyleCooldownRunning = false;
 	private float m_timeUntilReset = 1.0f;
 	private float m_currentArtstyleTimer = 0.0f;
-	public int m_killsForArtstyleChange = 50;
+	public int m_killsForArtstyleChangeEachRound = 50;
+	private int m_killsForArtstyleChange = 0;
+	private bool m_killsMetInLastRound = false;
 
 	// Menu variables
 	public int m_menuButtonWidth = 160;
@@ -47,9 +50,10 @@ public class GameManager : MonoBehaviour {
 	public float m_wordModeChance = 0.5f;
 	private bool m_roundStarted = false;
 	private float m_roundTimer = 0;
-	private float m_freeModeRoundTime = 20.0f;
+	private float m_freeModeRoundTime = 10.0f;
 	public float m_secondsPerPlayerInFreeMode = 3.0f;
 	public float m_timeUntilNextRound = 3.0f;
+	public float m_waitAfterWordMode = 10.0f;
 
 	// Notification texts
 	public string m_notificationFreeMode = "You are playing FREE MODE! Draw anything you want and submit it to the game!";
@@ -228,6 +232,14 @@ public class GameManager : MonoBehaviour {
 
 			Debug.Log(gamemode);
 
+			// change artstyle
+			if (m_killsMetInLastRound){
+				SwitchArtstyle();
+			}
+			m_killsMetInLastRound = false;
+
+			// calculate neccessary kills
+			m_killsForArtstyleChange = m_score + m_killsForArtstyleChangeEachRound;
 
 			// wait for round to start
 			for (float t = 0; t <= m_timeUntilNextRound - 1.0f; t += 1.0f){
@@ -316,11 +328,15 @@ public class GameManager : MonoBehaviour {
 								PlayerManager.s_playerManager.BroadcastNotificationToTeam(t, m_notificationWordModeWaitForOtherTeams, false, 0);
 							}
 
+							// set the time to wait after end of word mode
+							// will automatically be the length of the word that was spawned last (in seconds)
+							m_waitAfterWordMode = (float) m_wordSpawner.GetWordFromList(t-1).Length;
+
 							yield return StartCoroutine(m_wordSpawner.SpawnWordsOfTeamCoroutine(t));
 						}
 					}
 					// TODO: check results (correct order? accuracy?)
-
+					if (m_wordSpawner.IsQueueFull()) yield return new WaitForSeconds(m_waitAfterWordMode);
 					if (m_wordSpawner.IsQueueFull()) break;
 					else yield return new WaitForSeconds(2.0f);
 				}
@@ -353,7 +369,8 @@ public class GameManager : MonoBehaviour {
 				// start spawning incoming drawings
 				//m_wordSpawner.SpawnDrawingsFromQueue();
 
-				m_freeModeRoundTime = PlayerManager.s_playerManager.GetNumberOfPlayerAtBeginningOfCurrentRound() * m_secondsPerPlayerInFreeMode;
+				// set the time for free mode based on the number of connected players
+				m_freeModeRoundTime = PlayerManager.s_playerManager.GetNumberOfPlayers() * m_secondsPerPlayerInFreeMode;
 
 				// reset the round timer
 				m_roundTimer = 0;
@@ -398,12 +415,16 @@ public class GameManager : MonoBehaviour {
 			if (PlayerManager.s_playerManager.GetNumberOfPlayers() <= 0){
 				Debug.Log("screensaver is running...");
 
+				m_screensaverIsRunning = true;
+
 				yield return  m_wordSpawner.StartCoroutine(m_wordSpawner.SpawnWordFromStringCoroutine(m_screensaverWords[m_screensaverWordIndex]));
 
 				yield return new WaitForSeconds((float)(m_screensaverWords[m_screensaverWordIndex].Length / 2));
 
 				m_screensaverWordIndex = (m_screensaverWordIndex+1)%m_screensaverWords.Length;
 			} else {
+				m_screensaverIsRunning = false;
+
 				yield return new WaitForSeconds(1.0f);
 			}
 		}
@@ -520,11 +541,15 @@ public class GameManager : MonoBehaviour {
 		//Debug.Log("adding score " + _score);
 		m_score += _score;
 
-		if (m_score%m_killsForArtstyleChange == 0){
+		if (m_screensaverIsRunning && m_score%m_killsForArtstyleChangeEachRound == 0){
 			SwitchArtstyle();
 		}
 
-		if (m_score%m_killsForArtstyleChange == m_killsForArtstyleChange/2){
+		if (m_score >= m_killsForArtstyleChange){
+			m_killsMetInLastRound = true;
+		}
+
+		if (m_score%m_killsForArtstyleChangeEachRound == m_killsForArtstyleChangeEachRound/2){
 			m_wordSpawner.SpawnPowerUpBomb();
 		}
 
