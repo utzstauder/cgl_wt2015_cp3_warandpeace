@@ -54,6 +54,7 @@ public class GameManager : MonoBehaviour {
 	public float m_secondsPerPlayerInFreeMode = 3.0f;
 	public float m_timeUntilNextRound = 3.0f;
 	public float m_waitAfterWordMode = 10.0f;
+	private GameState m_nextMode;
 
 	// Notification texts
 	public string m_notificationFreeMode = "You are playing FREE MODE! Draw anything you want and submit it to the game!";
@@ -151,6 +152,8 @@ public class GameManager : MonoBehaviour {
 		m_previousState = m_currentState;
 		m_currentState = _targetState;
 
+		m_nextMode = _targetState;
+
 		/*string gameStateToSend = GetGameStateAsString(m_currentState);
 
 		for (int i = 0; i < PlayerManager.s_playerManager.GetNumberOfPlayers(); i++){
@@ -224,11 +227,16 @@ public class GameManager : MonoBehaviour {
 		while (true){
 			Debug.Log("GameLoop started");
 
-			// determine game mode
+			// initialise variable for game mode
 			GameState gamemode = GameState.playing_free;
 
+			// determine game mode
 			if (PlayerManager.s_playerManager.GetNumberOfPlayers() >= PlayerManager.s_playerManager.m_minPlayersPerTeam){
-				gamemode = GetRandomGameMode();
+				if (m_nextMode == GameState.playing_word){
+					gamemode = m_nextMode;
+				} else {
+					gamemode = GetRandomGameMode();
+				}
 			}
 
 			ChangeGameState(gamemode);
@@ -406,7 +414,14 @@ public class GameManager : MonoBehaviour {
 
 					if ((PlayerManager.s_playerManager.GetNumberOfPlayers() >= PlayerManager.s_playerManager.m_minPlayersPerTeam) && 
 						(m_roundTimer >= m_freeModeRoundTime)){
-						break;
+						// roll next game mode
+						if (GetRandomGameMode() == GameState.playing_free){
+							// if random mode was free, extend this round
+							m_roundTimer = m_timeUntilNextRound;
+						} else {
+							// if random mode was word, break from this loop and start a new round
+							break;
+						}
 					}
 
 					yield return new WaitForSeconds(1.0f);
@@ -555,7 +570,8 @@ public class GameManager : MonoBehaviour {
 		//Debug.Log("adding score " + _score);
 		m_score += _score;
 
-		if (m_screensaverIsRunning && m_score%m_killsForArtstyleChangeEachRound == 0){
+		if (m_score%m_killsForArtstyleChangeEachRound == 0 &&
+			(m_screensaverIsRunning || PlayerManager.s_playerManager.GetNumberOfPlayers() < PlayerManager.s_playerManager.m_minPlayersPerTeam)){
 			SwitchArtstyle();
 		}
 

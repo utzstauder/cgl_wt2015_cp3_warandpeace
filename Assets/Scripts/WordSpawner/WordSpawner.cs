@@ -28,7 +28,7 @@ public class WordSpawner : MonoBehaviour {
 	private List<int> m_teamSubmissionOrder;	// team ids in order of completion
 	private List<string> m_wordList;			// index is the team id
 
-	public float m_timeUntilNextDrawingInFreeMode = 2.0f;
+	public float m_timeUntilNextDrawingInFreeMode = 1.0f;
 
 	// pooled letterPixel objects
 	private List<LetterPixel> m_letterPixelPool;
@@ -138,6 +138,16 @@ public class WordSpawner : MonoBehaviour {
 		}
 
 		return false;
+	}
+	/*
+	 * Deletes all drawings of _player
+	 */
+	public void DeleteAllDrawingsOfPlayer(DrawInputPlayer _player){
+		foreach (Drawing drawing in m_drawingQueue){
+			if (drawing.playerId == _player.GetSessionId()){
+				m_drawingQueue.Remove(drawing);
+			}
+		}
 	}
 
 	/*

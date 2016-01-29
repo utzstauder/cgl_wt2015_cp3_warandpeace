@@ -651,7 +651,8 @@ requirejs([
 		idleTimer += 1;
 		
 		if (idleTimer >= idleTimeUntilQuit &&
-			notificationDismissable === true){
+			notificationDismissable === true &&
+			gameState === playing_word){
 			quitApplication();
 		}	
 	}

@@ -1,0 +1,1 @@
+sudo hft start --dns --no-ask-name --no-menu —kiosk

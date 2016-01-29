@@ -104,6 +104,10 @@ public class WordManager : MonoBehaviour {
 	 * returns true if the string _word exists in m_wordlist
 	 */
 	public bool CompareStringWithDictionary(string _word){
+		if (_word.Length < 3 || _word.Length > 8){
+			Debug.Log("Word length was either to long or to short");
+			return false;
+		}
 		foreach (string wordInDictionary in m_wordlist[_word.Length - 2]){
 			if (wordInDictionary == _word){
 				Debug.Log("Word '" + _word + "' found in dictionary!");

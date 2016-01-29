@@ -72,6 +72,11 @@ public class PlayerManager : MonoBehaviour {
 				m_wordSpawner.AddFreeDrawingToQueue(drawing);
 			}
 
+			// fallback for when a player leaves and their drawing is still queued
+			if (GameManager.s_gameManager.m_currentState == GameManager.GameState.playing_free){
+				
+			}
+
 			m_nPlayersCurrentRound--;
 		}
 
