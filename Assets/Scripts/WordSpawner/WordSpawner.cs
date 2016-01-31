@@ -28,7 +28,7 @@ public class WordSpawner : MonoBehaviour {
 	private List<int> m_teamSubmissionOrder;	// team ids in order of completion
 	private List<string> m_wordList;			// index is the team id
 
-	public float m_timeUntilNextDrawingInFreeMode = 1.0f;
+	public float m_timeUntilNextDrawingInFreeMode = 0.1f;
 
 	// pooled letterPixel objects
 	private List<LetterPixel> m_letterPixelPool;
@@ -182,12 +182,13 @@ public class WordSpawner : MonoBehaviour {
 	 * Returns true if the order of letters was correct
 	 */
 	public bool IsOrderCorrect(int _teamId){
-		//Debug.Log("TeamID: " + _teamId);
+		Debug.Log("Checking order for TeamID: " + _teamId);
 		//string word = GetWordFromList(_teamId);
 		string submittedDrawingsAsString = "";
 
 		foreach (Drawing drawing in m_drawingQueue){
-			if (drawing.teamId == (_teamId+1)){
+			Debug.Log(drawing.teamId + " == " + _teamId);
+			if (drawing.teamId == _teamId){
 				//Debug.Log("Drawing found");
 				if (PlayerManager.s_playerManager.GetPlayerReference(drawing.playerId)){
 					submittedDrawingsAsString = submittedDrawingsAsString + PlayerManager.s_playerManager.GetPlayerReference(drawing.playerId).GetCurrentLetter();

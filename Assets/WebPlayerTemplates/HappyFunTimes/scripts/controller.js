@@ -578,6 +578,9 @@ requirejs([
 	var currentLetterWidth = null;
 	var currentLetterHeight = null;
 	var currentLetterAsString = null;
+	var letterFontSize = 320;
+	var letterAreaWidth = 320;
+	var letterAreaHeight = 460;
 
 	// notification variables
 	var drawingEnabled = true;
@@ -586,9 +589,8 @@ requirejs([
 	var notificationTimerFunction = null;
 	var notificationShowing = false;
 	var notificationText = "";
+	var notificationMargin = 20;
 	//var imgTitlescreen = document.getElementById("titlescreen");
-
-	drawNotification();
 
 	// UI variables
 	var uiButtonBackground = "white";
@@ -624,6 +626,7 @@ requirejs([
 	var buttonClear = button("clear", 0, (uiCanvas.height - uiCanvas.height/10), (uiCanvas.width / 2), uiCanvas.height/10);
 	var buttonSend = button("send", (uiCanvas.width / 2), (uiCanvas.height - uiCanvas.height/10), (uiCanvas.width / 2), uiCanvas.height/10);
 	var buttonQuit = button('X', (uiCanvas.width - 50), 10, 40, 40);
+	var buttonDismiss = button("dismiss", (notificationMargin * 3), (uiCanvas.height * 3/4), (uiCanvas.width - (notificationMargin * 6)), 40);
 
 	// Check for device motion
 	if (window.DeviceMotionEvent || window.DeviceMotion){
@@ -683,6 +686,7 @@ requirejs([
 		buttonClear = button("clear", 0, (uiCanvas.height - uiCanvas.height/10), (uiCanvas.width / 2), uiCanvas.height/10);
 		buttonSend = button("send", (uiCanvas.width / 2), (uiCanvas.height - uiCanvas.height/10), (uiCanvas.width / 2), uiCanvas.height/10);
 		buttonQuit = button('X', (uiCanvas.width - 50), 10, 40, 40);
+		buttonDismiss = button("dismiss", (notificationMargin * 3), (uiCanvas.height * 3/4), (uiCanvas.width - (notificationMargin * 6)), 40);
 
 		redrawAll();
 	}
@@ -1121,9 +1125,13 @@ requirejs([
 	}
 
 	function drawNotification(){
-		// fill background
-		uiCtx.fillStyle = "white";
+		// fill first background
+		uiCtx.fillStyle = "gray";
 		uiCtx.fillRect(0, 0, uiCtx.canvas.width, uiCtx.canvas.height);
+		
+		// fill 2nd background
+		uiCtx.fillStyle = "white";
+		uiCtx.fillRect(notificationMargin, notificationMargin, uiCtx.canvas.width - notificationMargin * 2, uiCtx.canvas.height - notificationMargin * 2);
 
 		uiCtx.fillStyle = "black";
 		uiCtx.font = "30px arial";
@@ -1132,6 +1140,9 @@ requirejs([
 		
 		//uiCtx.fillText(notificationText, uiCtx.canvas.width/2, uiCtx.canvas.height/2);
 		wrapText(uiCtx, notificationText, uiCtx.canvas.width/2, uiCtx.canvas.height*1/3, uiCtx.canvas.width*3/4, 30);
+		
+		// fill "dismiss" box
+		if (notificationDismissable) drawButton(buttonDismiss);
 		
 		// reset idleTimer
 		idleTimer = 0;
@@ -1271,10 +1282,13 @@ requirejs([
 		return accuracy;
 	}
 	
-	function createDrawArray(context){
-		var width = context.canvas.width;
-		var height = context.canvas.height;
-		var imageData = context.getImageData(0, 0, width, height);
+	function createDrawArray(context, _x, _y, _width, _height){
+		var x = _x || 0;
+		var y = _y || 0;
+		var width = _width || context.canvas.width;
+		var height = _height || context.canvas.height;
+		
+		var imageData = context.getImageData(x, y, width, height);
 		
 		var drawArray = [];
 		for (var i = 3; i < (width*height*4); i += 4){
@@ -1287,11 +1301,17 @@ requirejs([
 	// END
 
 
+	// this is only called in word mode
 	function compareCanvas(contextTemplate, contextDraw){
-		var arrayTemplate = createDrawArray(contextTemplate);
-		var arrayDraw = createDrawArray(contextDraw);
+		var x1 = (contextTemplate.canvas.width - letterAreaWidth)/2;
+		var x2 = (contextDraw.canvas.width - letterAreaWidth)/2;
+		var y1 = (contextTemplate.canvas.height - letterAreaHeight)/2;
+		var y2 = (contextDraw.canvas.height - letterAreaHeight)/2;
+		var width = letterAreaWidth;
+		var height = letterAreaHeight;
 		
-		//alert(arrayTemplate.length + " & " + arrayDraw.length);
+		var arrayTemplate = createDrawArray(contextTemplate, x1, y1, width, height);
+		var arrayDraw = createDrawArray(contextDraw, x2, y2, width, height);
 		
 		//alert("test");
 		
@@ -1333,6 +1353,7 @@ requirejs([
 		return accuracy;
 	}
 	
+	// deprecated
 	function drawLetterOnBgCanvas(){
 		// draw the received letter on the background canvas
 		for (var y = 0; y < bgCanvas.height; y++){
@@ -1354,7 +1375,16 @@ requirejs([
 		
 		_string = _string.toUpperCase();
 		
-		bgCtx.font = bgCtx.canvas.height * 0.75 + "px LetterFont";
+		/*
+		// draw area
+		bgCtx.rect((bgCtx.canvas.width - letterAreaWidth)/2, (bgCtx.canvas.height - letterAreaHeight)/2, letterAreaWidth, letterAreaHeight);
+		bgCtx.strokeStyle = "white";
+		bgCtx.lineWidth = 2;
+		bgCtx.stroke();
+		*/
+		
+		// draw letter
+		bgCtx.font = /*bgCtx.canvas.height * 0.75*/ letterFontSize + "px LetterFont";
 		bgCtx.fillStyle = "white";
 		bgCtx.textBaseline = "middle";
 		bgCtx.textAlign = "center";
@@ -1362,14 +1392,21 @@ requirejs([
 	}
 	
 	function sendDrawArray(accuracy){
+		var x = 0;
+		var y = 0;
 		var width = ctx.canvas.width;
 		var height = ctx.canvas.height;
 		
-		// Get the image data from the drawCanvas
-		var imageData = ctx.getImageData(0, 0, width, height);
+		if (currentLetter !== null || currentLetterAsString !== null){
+			x = (bgCtx.canvas.width - letterAreaWidth)/2;
+			y = (bgCtx.canvas.height - letterAreaHeight)/2;
+			width = letterAreaWidth;
+			height = letterAreaHeight;
+		}
 		
 		// Transfer alpha values to new "normal" array
-		var drawArray = createDrawArray(ctx);
+		//alert (x + ", " + y + ", " + width + ", " + height);
+		var drawArray = createDrawArray(ctx, x, y, width, height);
 
 		var drawAccuracy = accuracy || defaultAccuracy;
 

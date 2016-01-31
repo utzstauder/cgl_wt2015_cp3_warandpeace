@@ -160,7 +160,7 @@ public class PlayerManager : MonoBehaviour {
 		m_numberOfTeams = numberOfTeams;
 
 		// check if there are enough players in each team
-		for (int i = 1; i <= numberOfTeams; i++){
+		for (int i = 0; i < numberOfTeams; i++){
 			List<DrawInputPlayer> playersInTeam = GetPlayersOfTeam(i);
 			if (playersInTeam.Count < m_minPlayersPerTeam){
 				m_maxPlayersPerTeam++;
@@ -171,9 +171,70 @@ public class PlayerManager : MonoBehaviour {
 
 		// fill list
 		m_playersInTeamAtBeginningOfRound.Clear();
-		for (int i = 1; i <= numberOfTeams; i++){
+		for (int i = 0; i < numberOfTeams; i++){
 			m_playersInTeamAtBeginningOfRound.Add(GetPlayersOfTeam(i).Count);
 		}
+	}
+
+	/*
+	 * Assign all players in the current round to a random team
+	 * Players are *not* divided equaly to allow for different word lengths
+	 */
+	public void AssignPlayersToTeamsRandom(){
+		ResetMaxPlayersPerTeam();
+
+		List<DrawInputPlayer> playersToAssign = GetPlayersInCurrentRound();
+		int numberOfPlayersToAssign = playersToAssign.Count;
+		Debug.Log("Players to assign: " + numberOfPlayersToAssign);
+
+		// the minimum amount of teams to fit all players
+		int numberOfTeamsMin = ((numberOfPlayersToAssign - 1)/m_maxPlayersPerTeamInitial) + 1;
+		// the maximum amount of teams to fit all players
+		int numberOfTeamsMax = numberOfPlayersToAssign / m_minPlayersPerTeam;
+
+		// this the actual number of teams that the players will be assigned to
+		int numberOfTeams = Random.Range(numberOfTeamsMin, numberOfTeamsMax + 1);
+		Debug.Log("Number of teams : " + numberOfTeamsMin + " <= " + numberOfTeams + " <= " + numberOfTeamsMax);
+
+		m_numberOfTeams = numberOfTeams;
+
+		do{
+			Debug.Log("Assigning players to random teams...");
+			// Assign players to random teams
+			foreach(DrawInputPlayer player in playersToAssign){
+				player.SetTeamId(Random.Range(0, numberOfTeams));
+				player.SetPlayerColor(GetTeamColor(player.GetTeamId()));
+				Debug.Log("gave team id " + player.GetTeamId());
+			}
+		}while (!EveryTeamHasValidNumberOfPlayer());
+
+		Debug.Log("Players successfully assigned to random teams");
+		for (int t = 0; t < m_numberOfTeams; t++){
+			Debug.Log("Team " + t + " has " + GetPlayersOfTeam(t).Count + " players.");
+		}
+
+		// fill list
+		m_playersInTeamAtBeginningOfRound.Clear();
+		for (int i = 0; i < numberOfTeams; i++){
+			m_playersInTeamAtBeginningOfRound.Add(GetPlayersOfTeam(i).Count);
+		}
+	}
+
+	public bool EveryTeamHasValidNumberOfPlayer(){
+		for (int t = 0; t < m_numberOfTeams; t++){
+			if (!TeamHasValidNumberOfPlayers(t)) return false;
+		}
+
+		return true;
+	}
+
+	public bool TeamHasValidNumberOfPlayers(int _teamId){
+		int numberOfPlayersInTeam = GetPlayersOfTeam(_teamId).Count;
+		if (numberOfPlayersInTeam < m_minPlayersPerTeam || 
+			numberOfPlayersInTeam > m_maxPlayersPerTeamInitial){
+			return false;
+		}
+		return true;
 	}
 
 	public int GetNumberOfTeams(){
@@ -202,7 +263,7 @@ public class PlayerManager : MonoBehaviour {
 	}
 
 	public int GetNumberOfPlayersInTeamAtBeginningOfRound(int _teamId){
-		return m_playersInTeamAtBeginningOfRound[_teamId-1];
+		return m_playersInTeamAtBeginningOfRound[_teamId];
 	}
 
 	/*
@@ -216,14 +277,14 @@ public class PlayerManager : MonoBehaviour {
 
 	public Color GetTeamColor(int _teamId){
 		switch (_teamId){
-			case 1: return Color.red;
+			case 0: return Color.red;
+			case 1: return Color.green;
 			case 2: return Color.blue;
 			case 3: return Color.yellow;
 			case 4: return Color.cyan;
-			case 5: return Color.green;
-			case 6: return Color.magenta;
-			case 7: return Color.gray;
-		default: break;
+			case 5: return Color.magenta;
+			case 6: return Color.gray;
+			default: return Random.ColorHSV();
 		}
 
 		return Color.white;

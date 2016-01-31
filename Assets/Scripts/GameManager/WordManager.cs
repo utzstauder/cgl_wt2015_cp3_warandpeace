@@ -104,7 +104,7 @@ public class WordManager : MonoBehaviour {
 	 * returns true if the string _word exists in m_wordlist
 	 */
 	public bool CompareStringWithDictionary(string _word){
-		if (_word.Length < 3 || _word.Length > 8){
+		if (_word.Length < 2 || _word.Length > 8){
 			Debug.Log("Word length was either to long or to short");
 			return false;
 		}
@@ -142,6 +142,7 @@ public class WordManager : MonoBehaviour {
 	}
 
 	public string GetRandomWord(int _length){
+		Debug.Log("Requested word of length: " + _length);
 		return m_wordlist[_length - 2][Random.Range(0, m_wordlist[_length - 2].Count)];
 	}
 

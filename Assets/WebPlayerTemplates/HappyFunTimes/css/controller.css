@@ -136,6 +136,34 @@ img {
 #debugCanvas { z-index: 4; }
 #inputCanvas { z-index: 5; }
 
+#turnthescreen {
+    display: none;
+}
+
+#turnthescreen div{
+	margin: auto;
+	width: 50%;
+	text-align: center;
+	padding-top: 50px;
+	font-weight: bold;
+}
+ 
+@media only screen and (max-width : 319px),
+only screen and (max-height : 459px) {
+/* Styles */
+    #turnthescreen {
+        position: absolute;
+        left: 0px;
+        top: 0px;
+        width: 100%;
+        height: 100%;
+        display: block;
+        z-index: 1000;
+        background-color: red;
+        color: white;
+    }
+}
+
 #full {
     display: none;
     z-index: 10;
