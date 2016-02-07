@@ -134,6 +134,19 @@ public class PlayerManager : MonoBehaviour {
 		}
 	}
 
+	public void PlaySoundAllClients(string _filename){
+		foreach (DrawInputPlayer player in m_players){
+			player.PlaySound(_filename);
+		}
+	}
+
+	public void PlaySoundAllInTeam(string _filename, int _teamId){
+		List<DrawInputPlayer> playersOfTeam = GetPlayersOfTeam(_teamId);
+		foreach (DrawInputPlayer player in playersOfTeam){
+			player.PlaySound(_filename);
+		}
+	}
+
 	private void ResetMaxPlayersPerTeam(){
 		m_maxPlayersPerTeam = m_maxPlayersPerTeamInitial;
 	}
@@ -181,6 +194,10 @@ public class PlayerManager : MonoBehaviour {
 	 * Players are *not* divided equaly to allow for different word lengths
 	 */
 	public void AssignPlayersToTeamsRandom(){
+		StartCoroutine(AssignPlayersToTeamsRandomCoroutine());
+	}
+
+	public IEnumerator AssignPlayersToTeamsRandomCoroutine(){
 		ResetMaxPlayersPerTeam();
 
 		List<DrawInputPlayer> playersToAssign = GetPlayersInCurrentRound();
@@ -206,6 +223,8 @@ public class PlayerManager : MonoBehaviour {
 				player.SetPlayerColor(GetTeamColor(player.GetTeamId()));
 				Debug.Log("gave team id " + player.GetTeamId());
 			}
+			yield return new WaitForEndOfFrame();
+
 		}while (!EveryTeamHasValidNumberOfPlayer());
 
 		Debug.Log("Players successfully assigned to random teams");

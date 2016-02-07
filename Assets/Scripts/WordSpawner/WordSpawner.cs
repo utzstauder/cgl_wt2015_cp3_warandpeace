@@ -18,6 +18,8 @@ public class WordSpawner : MonoBehaviour {
 	public int m_arrayDivisionFactor = 2;
 	public float m_letterScale = 1.0f;
 
+	public float m_worstAccuracy = .5f;
+
 	public Vector2 m_wordScaleRange = new Vector2(0.5f, 1.0f);
 
 	public Transform m_wordDestroyer;
@@ -630,10 +632,12 @@ public class WordSpawner : MonoBehaviour {
 			m_letterPixelPool.Add(letterPixel);
 		}
 
+		float opacity = Mathf.Lerp(m_worstAccuracy, 1.0f, _accuracy);
+
 		letterPixel.gameObject.SetActive(true);
 		letterPixel.transform.position = _position;
 		letterPixel.transform.localScale = Vector3.one * _scale;
-		letterPixel.Init(_accuracy, _color, this.transform);
+		letterPixel.Init(opacity, _color, this.transform);
 
 		//letterPixel.GetComponent<SpriteRenderer>().color = Color.Lerp(Color.black, _color, _accuracy);
 		//letterPixel.GetComponent<SpriteRenderer>().sprite.pixelsPerUnit *= _scale;

@@ -209,6 +209,7 @@ public class Drone : MonoBehaviour {
 		rocket.GetComponent<DroneRocket>().Init(m_droneCrosshairKillzone.transform.position);
 
 		m_bombCount--;
+		GameManager.s_gameManager.m_uiBombs.text = "BOMBS: " + m_bombCount;
 	}
 
 	private IEnumerator FireShot(){
@@ -251,11 +252,16 @@ public class Drone : MonoBehaviour {
 		if (_other.gameObject.CompareTag("PowerUpBomb")){
 			Destroy(_other.gameObject);
 			m_bombCount++;
+			GameManager.s_gameManager.m_uiBombs.text = "BOMBS: " + m_bombCount;
 		}
 	}
 
 	void OnDrawGizmosSelected(){
 		Gizmos.color = Color.red;
 		Gizmos.DrawLine(transform.position, m_targetPosition);
+	}
+
+	void OnGUI(){
+		
 	}
 }

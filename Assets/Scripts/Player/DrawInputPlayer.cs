@@ -159,7 +159,7 @@ public class DrawInputPlayer : MonoBehaviour {
 		//PushAccuracy(m_gamepad.drawAccuracy);
 		//Debug.Log("OnDrawingReceived");
 		GameManager.s_gameManager.OnPlayerReceivedDrawing(this);
-		PlaySound("Basic-select");
+		PlaySound("basic-select");
 	}
 
 	private void PushAccuracy(float _accuracy){
@@ -309,12 +309,12 @@ public class DrawInputPlayer : MonoBehaviour {
 	public void DrawLetterOnBackgroundFromString(string letter){
 		m_currentLetter = letter;
 		m_gamepad.SendLetter(letter);
-		PlaySound("newLetters");
+		PlaySound("new-letters");
 	}
 
 	public void SendNotification(string _message, bool _dismissable, float _timeout){
 		m_gamepad.SendNotification(_message, _dismissable, _timeout);
-		PlaySound("Basic-confirm");
+		//PlaySound("basic-confirm");
 	}
 
 	public void PlaySound(string filenameWithoutExtension){

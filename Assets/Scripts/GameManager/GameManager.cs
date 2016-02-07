@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour {
 
@@ -69,6 +70,15 @@ public class GameManager : MonoBehaviour {
 	public string m_notificationGamePaused = "GAME PAUSED";
 	public string m_notificationGameResumed = "GAME RESUMED";
 	public string m_notificationInitializing = "Welcome to DRAWNES! Please wait until the game starts.";
+
+	// UI references
+	public Text m_uiScoreLabel;
+	public Text m_uiScore;
+	public Text m_uiHighscore;
+	public Text m_uiHighscoreLabel;
+	public Text m_uiRoundTimer;
+	public Text m_uiBombs;
+
 	// Use this for initialization
 	void Awake () {
 		if (s_gameManager != null){
@@ -79,6 +89,13 @@ public class GameManager : MonoBehaviour {
 		}
 			
 		m_currentState = GameState.initializing;
+
+		m_uiScore.enabled = false;
+		m_uiScoreLabel.enabled = false;
+		m_uiRoundTimer.enabled = false;
+		m_uiBombs.enabled = false;
+		m_uiHighscore.enabled = false;
+		m_uiHighscoreLabel.enabled = false;
 	}
 
 	void Start(){
@@ -91,6 +108,10 @@ public class GameManager : MonoBehaviour {
 		PlayerManager.OnPlayerLeave += OnPlayerLeave;
 
 		PlayerManager.s_playerManager.BroadcastNotification(m_notificationInitializing, false, 0);
+		PlayerManager.s_playerManager.PlaySoundAllClients("basic-select");
+
+		// hide timer
+		m_uiRoundTimer.color = Color.clear;
 	}
 
 	void OnDestroy(){
@@ -108,20 +129,46 @@ public class GameManager : MonoBehaviour {
 		// handle button input
 		if (Input.GetKeyDown(KeyCode.Escape) && (m_currentState != GameState.initializing || m_currentState == GameState.end)){
 			if (m_currentState == GameState.paused){
-				//PlayerManager.s_playerManager.BroadcastNotification(m_notificationGameResumed, true, 0);
-				ChangeGameState(m_previousState);
+				Resume();
 			} else {
-				ChangeGameState(GameState.paused);
-				//PlayerManager.s_playerManager.BroadcastNotification(m_notificationGamePaused, false, 0);
+				Pause();
 			}
 		}
 
-		if (Input.GetKeyDown(KeyCode.Space) && m_currentState == GameState.initializing && m_pixelPoolReady){
-			StartGame();
+		if (Input.GetKeyDown(KeyCode.Keypad0) && IsPlaying()){
+			m_roundTimer = 0;
+		}
+
+		if (Input.GetKeyDown(KeyCode.P)){
+			Application.CaptureScreenshot("drawnes_" + System.DateTime.Now.Year + System.DateTime.Now.Month + System.DateTime.Now.Day + System.DateTime.Now.Hour + System.DateTime.Now.Minute + System.DateTime.Now.Second + ".png");
 		}
 
 		//Debug.Log(m_currentArtstyleTimer + " / " + m_timeUntilReset + " => current artstyle: " + ArtstyleManager.s_artstyleManager.m_currentStyle);
 		//Debug.Log(m_timeUntilReset - m_currentArtstyleTimer);
+	}
+
+	private void Pause(){
+		ChangeGameState(GameState.paused);
+		//PlayerManager.s_playerManager.BroadcastNotification(m_notificationGamePaused, false, 0);
+
+		m_uiScore.enabled = false;
+		m_uiScoreLabel.enabled = false;
+		m_uiRoundTimer.enabled = false;
+		m_uiBombs.enabled = false;
+		m_uiHighscore.enabled = false;
+		m_uiHighscoreLabel.enabled = false;
+	}
+
+	private void Resume(){
+		//PlayerManager.s_playerManager.BroadcastNotification(m_notificationGameResumed, true, 0);
+		ChangeGameState(m_previousState);
+
+		m_uiScore.enabled = true;
+		m_uiScoreLabel.enabled = true;
+		m_uiRoundTimer.enabled = true;
+		m_uiBombs.enabled = true;
+		m_uiHighscore.enabled = true;
+		m_uiHighscoreLabel.enabled = true;
 	}
 
 	public void SetPixelPoolReady(){
@@ -144,6 +191,13 @@ public class GameManager : MonoBehaviour {
 		if (PlayerManager.s_playerManager.GetNumberOfPlayers() > 0){
 			StartCoroutine(GameLoop());
 		}
+
+		m_uiScore.enabled = true;
+		m_uiScoreLabel.enabled = true;
+		m_uiRoundTimer.enabled = true;
+		m_uiBombs.enabled = true;
+		m_uiHighscore.enabled = true;
+		m_uiHighscoreLabel.enabled = true;
 	}
 
 	private void ChangeGameState(GameState _targetState){
@@ -186,7 +240,11 @@ public class GameManager : MonoBehaviour {
 	 * Resets everything to start a clean round
 	 */
 	private void ResetGame(){
-		m_score = 0;
+		ResetScore();
+
+		// hide timer
+		m_uiRoundTimer.color = Color.clear;
+
 		m_screensaverWordIndex = 0;
 		m_nextMode = GameState.playing_word;
 
@@ -265,6 +323,7 @@ public class GameManager : MonoBehaviour {
 			for (float t = 0; t <= m_timeUntilNextRound - 1.0f; t += 1.0f){
 				// notify players
 				PlayerManager.s_playerManager.BroadcastNotification("Round starts in " + (int)(m_timeUntilNextRound - t) +  " seconds!", false, 1.0f);
+				PlayerManager.s_playerManager.PlaySoundAllClients("basic-confirm");
 				//PlayerManager.s_playerManager.BroadcastNotification("test", false, 0.9f);
 				yield return new WaitForSeconds(1.0f);
 			}
@@ -285,10 +344,12 @@ public class GameManager : MonoBehaviour {
 				Debug.Log("Word mode started");
 
 				// if in WORD mode, assign player clients to teams (if needed)
-				PlayerManager.s_playerManager.AssignPlayersToTeamsRandom();
+				//PlayerManager.s_playerManager.AssignPlayersToTeamsRandom();
+				yield return StartCoroutine(PlayerManager.s_playerManager.AssignPlayersToTeamsRandomCoroutine());
 
 				// notify the players
 				PlayerManager.s_playerManager.BroadcastNotificationToCurrentRound(m_notificationWordMode, true, 0);
+				PlayerManager.s_playerManager.PlaySoundAllClients("basic-select");
 
 				int numberOfTeams = PlayerManager.s_playerManager.GetNumberOfTeams();
 
@@ -320,6 +381,9 @@ public class GameManager : MonoBehaviour {
 					}
 				}
 
+				// set next mode to free mode, gets overwritten on any wrong word
+				m_nextMode = GameState.playing_free;
+
 				// set flag for "round started"
 				m_roundStarted = true;
 
@@ -345,8 +409,7 @@ public class GameManager : MonoBehaviour {
 								} else {
 									PlayerManager.s_playerManager.BroadcastNotificationToTeam(t, m_notificationWordModeCorrectOrder, false, 0);
 								}
-
-								m_nextMode = GameState.playing_free;
+								PlayerManager.s_playerManager.PlaySoundAllInTeam("sucess-word", t);
 
 							} else {
 								// incorrect order
@@ -358,6 +421,7 @@ public class GameManager : MonoBehaviour {
 								} else {
 									PlayerManager.s_playerManager.BroadcastNotificationToTeam(t, m_notificationWordModeIncorrectOrder + m_wordSpawner.GetWordFromList(t), false, 0);
 								}
+								PlayerManager.s_playerManager.PlaySoundAllInTeam("basic-cancel", t);
 
 								m_nextMode = GameState.playing_word;
 							}
@@ -396,12 +460,16 @@ public class GameManager : MonoBehaviour {
 
 				// notify the players
 				PlayerManager.s_playerManager.BroadcastNotificationToCurrentRound(m_notificationFreeMode, true, 0);
+				PlayerManager.s_playerManager.PlaySoundAllClients("basic-select");
 			
 				// start spawning incoming drawings
 				//m_wordSpawner.SpawnDrawingsFromQueue();
 
 				// set the time for free mode based on the number of connected players
 				m_freeModeRoundTime = PlayerManager.s_playerManager.GetNumberOfPlayers() * m_secondsPerPlayerInFreeMode;
+
+				// hide timer
+				m_uiRoundTimer.color = Color.clear;
 
 				// reset the round timer
 				m_roundTimer = 0;
@@ -424,10 +492,20 @@ public class GameManager : MonoBehaviour {
 							m_nextMode = GameState.playing_word;
 							break;
 						}
+
+						if ((m_freeModeRoundTime - m_roundTimer) <= 10.0f){
+							m_uiRoundTimer.text = "" + (int)(m_freeModeRoundTime - m_roundTimer);
+							m_uiRoundTimer.color = new Color(1.0f, 1.0f, 1.0f, 0.5f);
+						} else {
+							m_uiRoundTimer.color = Color.clear;
+						}
 					}
 
 					yield return new WaitForSeconds(1.0f);
 				}
+				// hide timer
+				m_uiRoundTimer.color = Color.clear;
+
 				// stop spawning incoming drawings
 				//m_wordSpawner.StopSpawning();
 				m_prevRound = GameState.playing_free;
@@ -482,6 +560,8 @@ public class GameManager : MonoBehaviour {
 		} else if (m_currentState == GameState.paused){
 			PlayerManager.s_playerManager.BroadcastNotification(m_notificationGamePaused, false, 0);
 		}
+
+		_player.PlaySound("basic-select");
 	}
 
 	/*
@@ -588,15 +668,31 @@ public class GameManager : MonoBehaviour {
 
 		if (m_score > m_highscore){
 			m_highscore = m_score;
+			m_uiHighscore.text = "" + m_highscore;
+			m_uiScore.color = Color.red;
 		}
+
+		m_uiScore.text = "" + m_score;
 	}
 
 	public void ResetScore(){
 		m_score = 0;
+		m_uiScore.color = Color.yellow;
+
+		if (ArtstyleManager.s_artstyleManager.GetCurrentStyle() == ArtstyleManager.Style.arcade){
+			m_uiScoreLabel.text = "SCORE:";
+		} else m_uiScoreLabel.text = "CASUALTIES:";
+
+		m_uiScore.text = "" + m_score;
 	}
 
 	public void SwitchArtstyle(){
 		ArtstyleManager.s_artstyleManager.Switch();
+
+		// update GUI
+		if (ArtstyleManager.s_artstyleManager.GetCurrentStyle() == ArtstyleManager.Style.arcade){
+			m_uiScoreLabel.text = "SCORE:";
+		} else m_uiScoreLabel.text = "CASUALTIES:";
 	}
 
 	public void TriggerArtstyleChange(float _time){
@@ -687,7 +783,7 @@ public class GameManager : MonoBehaviour {
 
 			if (GUI.Button(new Rect(Screen.width/2 - m_menuButtonWidth/2, Screen.height*2/3 + m_menuButtonSpacing * 1, m_menuButtonWidth, m_menuButtonHeight), "RESUME GAME")){
 				ChangeGameState(m_previousState);
-				PlayerManager.s_playerManager.BroadcastNotification(m_notificationGameResumed, true, 0);
+				//PlayerManager.s_playerManager.BroadcastNotification(m_notificationGameResumed, true, 0);
 			}
 
 			if (GUI.Button(new Rect(Screen.width/2 - m_menuButtonWidth/2, Screen.height*2/3 + m_menuButtonSpacing * 2, m_menuButtonWidth, m_menuButtonHeight), "RESTART GAME")){
@@ -705,12 +801,15 @@ public class GameManager : MonoBehaviour {
 			GUILayout.EndVertical();
 		}
 
+		/*
 		if (IsPlaying()){
 			if (m_score >= m_highscore){
 				GUI.color = Color.red;
+				m_uiScore.color = Color.red;
 
 			} else {
 				GUI.color = Color.yellow;
+				m_uiScore.color = Color.yellow;
 			}
 			if (m_drone.IsInAutopilot()){
 				GUI.color = Color.blue;
@@ -726,5 +825,6 @@ public class GameManager : MonoBehaviour {
 				GUI.Label(new Rect(20, Screen.height - 40, 300, 20), "TIME LEFT IN FREE MODE: " + (m_freeModeRoundTime - m_roundTimer));
 			}
 		}
+		*/
 	}
 }

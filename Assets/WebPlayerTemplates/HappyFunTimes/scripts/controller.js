@@ -1384,7 +1384,7 @@ requirejs([
 		*/
 		
 		// draw letter
-		bgCtx.font = /*bgCtx.canvas.height * 0.75*/ letterFontSize + "px LetterFont";
+		bgCtx.font = /*bgCtx.canvas.height * 0.75*/ letterFontSize + "px Arial";
 		bgCtx.fillStyle = "white";
 		bgCtx.textBaseline = "middle";
 		bgCtx.textAlign = "center";
